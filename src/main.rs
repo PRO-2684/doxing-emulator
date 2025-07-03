@@ -2,10 +2,10 @@
 
 use anyhow::{Ok, Result};
 use doxing_emulator::{Config, run};
-use tokio::fs::read_to_string;
-use toml::from_str;
 use env_logger::Env;
 use std::io::Write;
+use tokio::fs::read_to_string;
+use toml::from_str;
 
 #[tokio::main]
 async fn main() -> Result<()> {

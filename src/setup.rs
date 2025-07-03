@@ -26,7 +26,6 @@ pub async fn setup_commands(bot: &Bot) -> Result<(), Error> {
     // Register commands
     let commands_param = SetMyCommandsParams::builder()
         .commands(commands.to_vec())
-        .scope(BotCommandScope::AllGroupChats)
         .build();
     bot.set_my_commands(&commands_param).await?;
 

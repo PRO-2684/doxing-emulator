@@ -33,15 +33,39 @@ impl Commands {
     /// - `text` - The text to check.
     /// - `username` - The username of the bot.
     pub fn parse(text: Option<&String>, username: &str) -> Option<Self> {
-        None
+        let Some(text) = text else {
+            return None;
+        };
+        let text = text.trim();
+        let (command, arg) = text.split_once(' ').unwrap_or((text, ""));
+
+        // Two possible command formats:
+        // 1. /command <arg>
+        // 2. /command@bot_username <arg>
+
+        // Trim the leading slash
+        let slash = command.starts_with('/');
+        if !slash {
+            return None;
+        }
+        let command = &command[1..];
+
+        // Split out the mention and check if it's the bot
+        let (command, mention) = command.split_once('@').unwrap_or((command, ""));
+        if !mention.is_empty() && mention != username {
+            return None;
+        }
+
+        // Match the command
+        match command {
+            Dox::TRIGGER => Some(Self::Dox(Dox {})),
+            Help::TRIGGER => Some(Self::Help(Help)),
+            _ => None,
+        }
     }
 
     /// Execute the command.
-    pub async fn execute(
-        self,
-        bot: &Bot,
-        msg: Message
-    ) -> String {
+    pub async fn execute(self, bot: &Bot, msg: Message) -> String {
         match self {
             Self::Help(help) => help.execute(bot, msg).await,
             Self::Dox(dox) => dox.execute(bot, msg).await,
