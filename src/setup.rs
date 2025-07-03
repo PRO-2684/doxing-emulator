@@ -6,7 +6,7 @@ use frankenstein::{
     AsyncTelegramApi, Error,
     client_reqwest::Bot,
     methods::{DeleteMyCommandsParams, SetMyCommandsParams, SetMyDefaultAdministratorRightsParams},
-    types::{BotCommand, BotCommandScope, ChatAdministratorRights},
+    types::{BotCommand, ChatAdministratorRights},
 };
 
 /// Set up commands.

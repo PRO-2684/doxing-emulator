@@ -10,6 +10,6 @@ impl Command for Help {
     const TRIGGER: &'static str = "help";
     const HELP: &'static str = "查看帮助信息";
     async fn execute(self, _bot: &Bot, _msg: Message) -> String {
-        include_str!("../templates/help.html").to_string()
+        include_str!("../messages/help.html").to_string()
     }
 }

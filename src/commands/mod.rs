@@ -58,7 +58,16 @@ impl Commands {
 
         // Match the command
         match command {
-            Dox::TRIGGER => Some(Self::Dox(Dox {})),
+            Dox::TRIGGER => {
+                let doxee = if arg.is_empty() {
+                    None
+                } else { Some({
+                    arg.to_string()
+                }) };
+                Some(Self::Dox(Dox {
+                    doxee
+                }))
+            },
             Help::TRIGGER => Some(Self::Help(Help)),
             _ => None,
         }
