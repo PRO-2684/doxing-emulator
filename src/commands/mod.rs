@@ -14,7 +14,39 @@ pub trait Command {
     /// Help message.
     const HELP: &'static str;
     /// Execute the command.
-    async fn execute(bot: &Bot, msg: Message) -> String;
+    async fn execute(self, bot: &Bot, msg: Message) -> String;
+}
+
+/// Available commands.
+pub enum Commands {
+    /// The help command.
+    Help(Help),
+    /// The dox command.
+    Dox(Dox),
+}
+
+impl Commands {
+    /// Try to parse the given text to a command.
+    ///
+    /// # Arguments
+    ///
+    /// - `text` - The text to check.
+    /// - `username` - The username of the bot.
+    pub fn parse(text: Option<&String>, username: &str) -> Option<Self> {
+        None
+    }
+
+    /// Execute the command.
+    pub async fn execute(
+        self,
+        bot: &Bot,
+        msg: Message
+    ) -> String {
+        match self {
+            Self::Help(help) => help.execute(bot, msg).await,
+            Self::Dox(dox) => dox.execute(bot, msg).await,
+        }
+    }
 }
 
 /// A list of available commands and descriptions.
