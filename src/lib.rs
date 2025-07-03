@@ -5,18 +5,17 @@
 #![deny(missing_docs)]
 #![warn(clippy::all, clippy::nursery, clippy::pedantic, clippy::cargo)]
 
-/// Add two numbers together.
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
+use anyhow::Result;
+use serde::Deserialize;
+
+/// Configuration for the bot.
+#[derive(Deserialize)]
+pub struct Config {
+    /// The token for the bot.
+    pub token: String,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+/// Runs the bot.
+pub async fn run(config: Config) -> Result<()> {
+    Ok(())
 }

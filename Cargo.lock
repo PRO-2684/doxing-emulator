@@ -77,6 +77,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhow"
+version = "1.0.98"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e16d2d3311acee920a9eb8d33b8cbc1787ce4a264e85f964c2404b969bdcd487"
+
+[[package]]
 name = "async-trait"
 version = "0.1.88"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -228,8 +234,10 @@ dependencies = [
 name = "doxing-emulator"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "env_logger",
  "frankenstein",
+ "lcid",
  "log",
  "rand",
  "serde",
@@ -694,6 +702,12 @@ dependencies = [
  "once_cell",
  "wasm-bindgen",
 ]
+
+[[package]]
+name = "lcid"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1a64d0493f4e4f60a0dcb6a83efeedcee31dde867ae5b4f28aad9405cb2f52ce"
 
 [[package]]
 name = "libc"

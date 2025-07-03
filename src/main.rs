@@ -1,10 +1,20 @@
 #![warn(clippy::all, clippy::nursery, clippy::pedantic, clippy::cargo)]
 
-use doxing_emulator::add;
+use anyhow::{Ok, Result};
+use tokio::fs::read_to_string;
+use toml::from_str;
+use doxing_emulator::{Config, run};
 
-fn main() {
-    let left = 2;
-    let right = 2;
-    let result = add(left, right);
-    println!("The sum of {left} and {right} is {result}");
+#[tokio::main]
+async fn main() -> Result<()> {
+    let config = read_config().await?;
+    run(config).await
+}
+
+async fn read_config() -> Result<Config> {
+    let path = std::env::args().nth(1).unwrap_or_else(|| "config.toml".to_string());
+    let config = read_to_string(path).await?;
+    let config = from_str(&config)?;
+
+    Ok(config)
 }
