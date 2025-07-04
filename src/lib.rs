@@ -57,11 +57,13 @@ pub async fn run(config: Config) -> Result<()> {
                 for update in updates.result {
                     debug!("Received update: {update:?}");
                     let UpdateContent::Message(msg) = update.content else {
+                        // TODO: Handle inline
                         continue;
                     };
 
                     let text = msg.text.as_ref();
                     let Some(command) = Commands::parse(text, &username) else {
+                        // TODO: Handle forwarded messages
                         debug!("Not a command: {text:?}");
                         continue;
                     };
