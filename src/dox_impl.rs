@@ -78,6 +78,7 @@ fn detailed_doxing(full_info: ChatFullInfo) -> Option<String> {
     Some(detail)
 }
 
+// TODO: Cache the result for some duration.
 /// Try to get info about the user, only available if the user has contacted the bot.
 pub async fn get_info(bot: &Bot, user_id: u64) -> Option<ChatFullInfo> {
     let chat_id = match i64::try_from(user_id) {
@@ -103,4 +104,11 @@ fn escape(s: &str) -> String {
         .replace('<', "&lt;")
         .replace('>', "&gt;")
     // TODO: More effiency by iterating over chars, estimating resulting size and creating new string
+}
+
+// TODO: Cache the result for some duration.
+/// Try to get [`User`] from given id or username.
+pub async fn get_user(id_or_username: String) -> Option<User> {
+    // TODO: Get user
+    None
 }

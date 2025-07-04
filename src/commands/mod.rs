@@ -36,7 +36,7 @@ impl Commands {
     #[must_use]
     pub fn parse(text: Option<&String>, username: &str) -> Option<Self> {
         let text = text?.trim();
-        let (command, _arg) = text.split_once(' ').unwrap_or((text, ""));
+        let (command, arg) = text.split_once(' ').unwrap_or((text, ""));
 
         // Two possible command formats:
         // 1. /command <arg>
@@ -57,7 +57,15 @@ impl Commands {
 
         // Match the command
         match command {
-            Dox::TRIGGER => Some(Self::Dox(Dox)),
+            Dox::TRIGGER => {
+                let arg = arg.trim();
+                let doxee = if arg.is_empty() {
+                    None
+                } else {
+                    Some(arg.to_string())
+                };
+                Some(Self::Dox(Dox { doxee }))
+            },
             Help::TRIGGER => Some(Self::Help(Help)),
             _ => None,
         }
