@@ -32,11 +32,9 @@ impl Commands {
     ///
     /// - `text` - The text to check.
     /// - `username` - The username of the bot.
+    #[must_use]
     pub fn parse(text: Option<&String>, username: &str) -> Option<Self> {
-        let Some(text) = text else {
-            return None;
-        };
-        let text = text.trim();
+        let text = text?.trim();
         let (command, arg) = text.split_once(' ').unwrap_or((text, ""));
 
         // Two possible command formats:
@@ -62,7 +60,7 @@ impl Commands {
                 let doxee = if arg.is_empty() {
                     None
                 } else {
-                    Some({ arg.to_string() })
+                    Some(arg.to_string())
                 };
                 Some(Self::Dox(Dox { doxee }))
             }
