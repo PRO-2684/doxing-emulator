@@ -1,12 +1,9 @@
 //! Actual implementation of doxing.
 
 use frankenstein::{
-    AsyncTelegramApi,
-    client_reqwest::Bot,
-    methods::GetChatParams,
-    types::{Birthdate, ChatFullInfo, ChatType, User},
+    client_reqwest::Bot, methods::{GetChatMemberParams, GetChatParams}, types::{Birthdate, ChatFullInfo, ChatMember, ChatType, User}, AsyncTelegramApi
 };
-use log::warn;
+use log::{debug, warn};
 use std::fmt::Write;
 
 /// Dox given [`User`] and optional [`ChatFullInfo`].
@@ -84,7 +81,7 @@ pub async fn get_info(bot: &Bot, user_id: u64) -> Option<ChatFullInfo> {
     let chat_id = match i64::try_from(user_id) {
         Ok(id) => id,
         Err(e) => {
-            warn!("Cannot convert user_id {user_id} to chat_id: {e:?}");
+            warn!("[get_info] Cannot convert user_id {user_id} to chat_id: {e:?}");
             return None;
         }
     };
@@ -126,13 +123,39 @@ pub async fn get_user(bot: &Bot, identifier: String) -> Option<User> {
 // TODO: Cache the result.
 /// Try to get [`User`] from given id.
 async fn get_user_by_id(bot: &Bot, user_id: u64) -> Option<User> {
-    // TODO: Get user by id
-    None
+    let chat_id = match i64::try_from(user_id) {
+        Ok(id) => id,
+        Err(e) => {
+            warn!("[get_user_by_id] Cannot convert user_id {user_id} to chat_id: {e:?}");
+            return None;
+        }
+    };
+    let get_params = GetChatMemberParams::builder()
+        .chat_id(chat_id)
+        .user_id(user_id)
+        .build();
+    match bot.get_chat_member(&get_params).await {
+        Ok(result) => {
+            let user = match result.result {
+                ChatMember::Administrator(admin) => admin.user,
+                ChatMember::Creator(creator) => creator.user,
+                ChatMember::Kicked(kicked) => kicked.user,
+                ChatMember::Left(left) => left.user,
+                ChatMember::Member(member) => member.user,
+                ChatMember::Restricted(restricted) => restricted.user,
+            };
+            Some(user)
+        },
+        Err(e) => {
+            debug!("Cannot get user from id {user_id}: {e:?}");
+            None
+        },
+    }
 }
 
 // TODO: Cache the result.
 /// Try to get [`User`] from given username. Note that the provided username mustn't start with `@`.
-async fn get_user_by_username(bot: &Bot, username: String) -> Option<User> {
+async fn get_user_by_username(_bot: &Bot, _username: String) -> Option<User> {
     // TODO: Get user by username
     None
 }
