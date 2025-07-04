@@ -3,7 +3,7 @@
 use frankenstein::{
     client_reqwest::Bot, methods::{GetChatMemberParams, GetChatParams}, types::{Birthdate, ChatFullInfo, ChatMember, ChatType, User}, AsyncTelegramApi
 };
-use log::{debug, warn};
+use log::{debug, error, warn};
 use std::fmt::Write;
 
 /// Dox given [`User`] and optional [`ChatFullInfo`].
@@ -76,12 +76,12 @@ fn detailed_doxing(full_info: ChatFullInfo) -> Option<String> {
 }
 
 // TODO: Cache the result.
-/// Try to get info about the user, only available if the user has contacted the bot.
-pub async fn get_info(bot: &Bot, user_id: u64) -> Option<ChatFullInfo> {
+/// Try to get full info about the user, only available if the user has contacted the bot.
+pub async fn get_full_info(bot: &Bot, user_id: u64) -> Option<ChatFullInfo> {
     let chat_id = match i64::try_from(user_id) {
         Ok(id) => id,
         Err(e) => {
-            warn!("[get_info] Cannot convert user_id {user_id} to chat_id: {e:?}");
+            warn!("[get_full_info] Cannot convert user_id {user_id} to chat_id: {e:?}");
             return None;
         }
     };
@@ -103,20 +103,22 @@ fn escape(s: &str) -> String {
     // TODO: More effiency by iterating over chars, estimating resulting size and creating new string
 }
 
-/// Try to get [`User`] from given id or username.
-pub async fn get_user(bot: &Bot, identifier: String) -> Option<User> {
+/// Try to get [`User`] and its full info from given id or username.
+pub async fn get_user_full(bot: &Bot, identifier: String) -> Option<(User, Option<ChatFullInfo>)> {
     if !identifier.is_ascii() {
         None
     } else if identifier.chars().all(|c| c.is_ascii_digit()) {
         let user_id: u64 = identifier.parse().ok()?;
-        get_user_by_id(bot, user_id).await
-    } else {
-        // let username = identifier.trim_start_matches('@');
-        let mut username = identifier;
-        if username.starts_with('@') {
-            username.drain(..1);
+        let user = get_user_by_id(bot, user_id).await;
+        if let Some(user) = user {
+            Some((user, get_full_info(bot, user_id).await))
+        } else {
+            None
         }
-        get_user_by_username(bot, username).await
+    } else {
+        // let username = identifier.trim_start_matches('@').to_ascii_lowercase();
+        // get_user_full_by_username(bot, username).await
+        None
     }
 }
 
@@ -154,8 +156,37 @@ async fn get_user_by_id(bot: &Bot, user_id: u64) -> Option<User> {
 }
 
 // TODO: Cache the result.
-/// Try to get [`User`] from given username. Note that the provided username mustn't start with `@`.
-async fn get_user_by_username(_bot: &Bot, _username: String) -> Option<User> {
-    // TODO: Get user by username
-    None
+/// **Won't work. Kept for reference only.**
+///
+/// Try to get [`User`] from given username. Note that the provided username mustn't start with `@` and should be lowercased for best caching.
+#[allow(dead_code, reason = "Kept for reference")]
+async fn get_user_full_by_username(bot: &Bot, username: String) -> Option<(User, Option<ChatFullInfo>)> {
+    let get_params = GetChatParams::builder()
+        .chat_id(format!("@{username}"))
+        .build();
+    let full_info = match bot.get_chat(&get_params).await {
+        Err(e) => {
+            warn!("Error querying @{username}: {e:?}");
+            None
+        }
+        Ok(r) => Some(r.result),
+    }?;
+    if !matches!(full_info.type_field, ChatType::Private) {
+        warn!("Trying to get user full on a non-private chat: @{username}");
+        return None;
+    }
+
+    let chat_id = full_info.id;
+    let user_id = match u64::try_from(chat_id) {
+        Ok(id) => id,
+        Err(e) => {
+            warn!("[get_user_full_by_username] Cannot convert chat_id {chat_id} to user_id: {e:?}");
+            return None;
+        },
+    };
+    let Some(user) = get_user_by_id(bot, user_id).await else {
+        error!("Cannot get user by id, even we've got chat full info");
+        return None;
+    };
+    Some((user, Some(full_info)))
 }

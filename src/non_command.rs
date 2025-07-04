@@ -1,6 +1,6 @@
 //! Module for handling non-command messages.
 
-use super::dox_impl::{dox, get_info};
+use super::dox_impl::{dox, get_full_info};
 use frankenstein::{
     client_reqwest::Bot,
     types::{ChatType, Message, MessageOrigin},
@@ -17,7 +17,7 @@ pub async fn handle_non_command(bot: &Bot, msg: Message) -> Option<String> {
             if let MessageOrigin::User(origin_user) = *origin {
                 // ... from a user
                 let doxee = origin_user.sender_user;
-                let full_info = get_info(bot, doxee.id).await;
+                let full_info = get_full_info(bot, doxee.id).await;
                 dox(doxee, full_info)
             } else {
                 // ... from something else
