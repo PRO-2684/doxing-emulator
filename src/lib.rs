@@ -13,11 +13,7 @@ mod dox_impl;
 use anyhow::{Result, bail};
 pub use commands::{Command, Commands};
 use frankenstein::{
-    AsyncTelegramApi, ParseMode,
-    client_reqwest::Bot,
-    methods::{GetUpdatesParams, SendMessageParams},
-    types::ReplyParameters,
-    updates::UpdateContent,
+    client_reqwest::Bot, methods::{GetUpdatesParams, SendMessageParams}, types::{ChatType, MessageOrigin, ReplyParameters}, updates::UpdateContent, AsyncTelegramApi, ParseMode
 };
 use log::{debug, error, info};
 use serde::Deserialize;
@@ -61,26 +57,52 @@ pub async fn run(config: Config) -> Result<()> {
                         continue;
                     };
 
-                    let text = msg.text.as_ref();
-                    let Some(command) = Commands::parse(text, &username) else {
-                        // TODO: Handle forwarded messages
-                        debug!("Not a command: {text:?}");
-                        continue;
-                    };
+                    // Handling messages
                     let bot = bot.clone();
+                    let parsed = Commands::parse(msg.text.as_ref(), &username);
                     tokio::spawn(async move {
                         let chat_id = msg.chat.id;
                         let message_id = msg.message_id;
-                        let reply = command.execute(&bot, *msg).await;
-                        let reply_param = ReplyParameters::builder().message_id(message_id).build();
-                        let send_message_param = SendMessageParams::builder()
-                            .chat_id(chat_id)
-                            .text(reply)
-                            .reply_parameters(reply_param)
-                            .parse_mode(ParseMode::Html)
-                            .build();
-                        if let Err(err) = bot.send_message(&send_message_param).await {
-                            error!("Failed to send message: {err}");
+                        let reply = match parsed {
+                            // Commands
+                            Some(command) => Some(command.execute(&bot, *msg).await),
+                            // Non-commands, can be forwarded messages or others
+                            None => {
+                                // We only handle those in private chats, to prevent polluting the groups
+                                if matches!(msg.chat.type_field, ChatType::Private) {
+                                    let reply = if let Some(origin) = msg.forward_origin {
+                                        // The message is forwarded
+                                        if let MessageOrigin::User(origin_user) = *origin {
+                                            // ... from a user
+                                            let user = origin_user.sender_user;
+                                            format!("TODO: Dox user {}", user.id)
+                                        } else {
+                                            // ... from something else
+                                            debug!("Cannot determine the origin as a user: {origin:?}");
+                                            include_str!("messages/invalid-origin.html").to_string()
+                                        }
+                                    } else {
+                                        // Not forwarded message - incomprehensible
+                                        debug!("Not a command or forwarded message: {text:?}", text = msg.text.as_ref());
+                                        include_str!("messages/incomprehensible.html").to_string()
+                                    };
+                                    Some(reply)
+                                } else {
+                                    None
+                                }
+                            },
+                        };
+                        if let Some(reply) = reply {
+                            let reply_param = ReplyParameters::builder().message_id(message_id).build();
+                            let send_message_param = SendMessageParams::builder()
+                                .chat_id(chat_id)
+                                .text(reply)
+                                .reply_parameters(reply_param)
+                                .parse_mode(ParseMode::Html)
+                                .build();
+                            if let Err(err) = bot.send_message(&send_message_param).await {
+                                error!("Failed to send message: {err}");
+                            }
                         }
                     });
                 }
