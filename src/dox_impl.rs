@@ -1,8 +1,13 @@
 //! Actual implementation of doxing.
 
-use std::fmt::Write;
+use frankenstein::{
+    AsyncTelegramApi,
+    client_reqwest::Bot,
+    methods::GetChatParams,
+    types::{Birthdate, ChatFullInfo, ChatType, User},
+};
 use log::warn;
-use frankenstein::{client_reqwest::Bot, methods::GetChatParams, types::{Birthdate, ChatFullInfo, ChatType, User}, AsyncTelegramApi};
+use std::fmt::Write;
 
 /// Dox given [`User`] and optional [`ChatFullInfo`].
 pub fn dox(doxee: User, full_info: Option<ChatFullInfo>) -> String {
@@ -20,7 +25,9 @@ pub fn dox(doxee: User, full_info: Option<ChatFullInfo>) -> String {
         }
     }
     // Detailed doxing if full info provided
-    if let Some(full_info) = full_info && let Some(detail) = detailed_doxing(full_info) {
+    if let Some(full_info) = full_info
+        && let Some(detail) = detailed_doxing(full_info)
+    {
         report.push_str(&detail);
     }
     // Names & finish report

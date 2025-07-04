@@ -7,15 +7,21 @@
 #![allow(clippy::multiple_crate_versions, reason = "Dependency")]
 
 mod commands;
-mod setup;
 mod dox_impl;
+mod non_command;
+mod setup;
 
 use anyhow::{Result, bail};
 pub use commands::{Command, Commands};
 use frankenstein::{
-    client_reqwest::Bot, methods::{GetUpdatesParams, SendMessageParams}, types::{ChatType, MessageOrigin, ReplyParameters}, updates::UpdateContent, AsyncTelegramApi, ParseMode
+    AsyncTelegramApi, ParseMode,
+    client_reqwest::Bot,
+    methods::{GetUpdatesParams, SendMessageParams},
+    types::ReplyParameters,
+    updates::UpdateContent,
 };
 use log::{debug, error, info};
+use non_command::handle_non_command;
 use serde::Deserialize;
 use setup::{setup_commands, setup_rights};
 
@@ -67,33 +73,11 @@ pub async fn run(config: Config) -> Result<()> {
                             // Commands
                             Some(command) => Some(command.execute(&bot, *msg).await),
                             // Non-commands, can be forwarded messages or others
-                            None => {
-                                // We only handle those in private chats, to prevent polluting the groups
-                                if matches!(msg.chat.type_field, ChatType::Private) {
-                                    let reply = if let Some(origin) = msg.forward_origin {
-                                        // The message is forwarded
-                                        if let MessageOrigin::User(origin_user) = *origin {
-                                            // ... from a user
-                                            let user = origin_user.sender_user;
-                                            format!("TODO: Dox user {}", user.id)
-                                        } else {
-                                            // ... from something else
-                                            debug!("Cannot determine the origin as a user: {origin:?}");
-                                            include_str!("messages/invalid-origin.html").to_string()
-                                        }
-                                    } else {
-                                        // Not forwarded message - incomprehensible
-                                        debug!("Not a command or forwarded message: {text:?}", text = msg.text.as_ref());
-                                        include_str!("messages/incomprehensible.html").to_string()
-                                    };
-                                    Some(reply)
-                                } else {
-                                    None
-                                }
-                            },
+                            None => handle_non_command(&bot, *msg).await,
                         };
                         if let Some(reply) = reply {
-                            let reply_param = ReplyParameters::builder().message_id(message_id).build();
+                            let reply_param =
+                                ReplyParameters::builder().message_id(message_id).build();
                             let send_message_param = SendMessageParams::builder()
                                 .chat_id(chat_id)
                                 .text(reply)

@@ -1,6 +1,9 @@
 //! The dox command.
 
-use super::{Command, dox_impl::{dox, get_info}};
+use super::{
+    Command,
+    dox_impl::{dox, get_info},
+};
 use frankenstein::{
     client_reqwest::Bot,
     types::{Message, User},
