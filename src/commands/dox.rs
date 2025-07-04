@@ -1,7 +1,8 @@
 //! The dox command.
 
 use super::Command;
-use frankenstein::{client_reqwest::Bot, types::Message};
+use frankenstein::{client_reqwest::Bot, methods::GetChatParams, types::{Birthdate, ChatFullInfo, ChatId, ChatType, Message}, AsyncTelegramApi};
+use log::warn;
 
 /// The dox command.
 pub struct Dox {
@@ -12,8 +13,8 @@ pub struct Dox {
 impl Command for Dox {
     const TRIGGER: &'static str = "dox";
     const HELP: &'static str = "盒盒盒";
-    async fn execute(self, _bot: &Bot, msg: Message) -> String {
-        // TODO: Reject premium users
+    async fn execute(self, bot: &Bot, msg: Message) -> String {
+        // TODO: Reject premium users & users that have not contacted the bot
         // Determine doxee
         let doxee = match self.doxee {
             // Target not provided in command
@@ -40,11 +41,6 @@ impl Command for Dox {
 
         // Generate doxing report
         let mut report = String::new();
-        // TODO: Data center (getUserProfilePhotos -> file_id -> getFile)
-        // TODO: Personal channel
-        // TODO: Phone No
-        // TODO: Birthday
-        // Use getChatMember/getChat for more detail?
         // User ID
         let id = doxee.id;
         report.push_str(&format!("用户 ID 是 {id}"));
@@ -52,6 +48,10 @@ impl Command for Dox {
         if let Some(username) = doxee.username {
             report.push_str("，用户名是 ");
             report.push_str(&username);
+        };
+        // Detailed doxing
+        if let Some(detail) = detailed_doxing(bot, id).await {
+            report.push_str(&detail);
         };
         // Names & finish report
         report.push_str(" 的 ");
@@ -75,4 +75,45 @@ impl Command for Dox {
 fn escape(s: &str) -> String {
     s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
     // TODO: More effiency by iterating over chars, estimating resulting size and creating new string
+}
+
+/// Detailed doxing, only available if the user has contacted the bot.
+async fn detailed_doxing(bot: &Bot, user_id: u64) -> Option<String> {
+    let info = get_info(bot, user_id).await?;
+
+    let mut detail = String::new();
+    if !matches!(info.type_field, ChatType::Private) {
+        warn!("Trying to dox a non-private chat: {user_id}");
+        return None;
+    }
+    if let Some(birthday) = info.birthdate {
+        // detail.push_str("生日是 ");
+        let Birthdate {
+            year, // Optional???
+            month,
+            day,
+        } = birthday;
+        detail.push_str(&format!("生日是 {year:04}/{month:02}/{day:02}，"));
+    };
+    if let Some(channel) = info.personal_chat {
+        if let Some(channel_username) = channel.username {
+            detail.push_str(&format!("开通了 tg 空间 @{channel_username}，"));
+        } else {
+            warn!("Cannot get username of personal channel: {}", channel.id);
+        };
+    };
+
+    Some(detail)
+}
+
+/// Try to get info about the user, only available if the user has contacted the bot.
+async fn get_info(bot: &Bot, user_id: u64) -> Option<ChatFullInfo> {
+    let get_params = GetChatParams::builder().chat_id(user_id as i64).build();
+    match bot.get_chat(&get_params).await {
+        Err(e) => {
+            warn!("Error querying {user_id}: {e:?}");
+            None
+        }
+        Ok(r) => Some(r.result)
+    }
 }
