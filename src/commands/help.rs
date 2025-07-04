@@ -4,6 +4,7 @@ use super::Command;
 use frankenstein::{client_reqwest::Bot, types::Message};
 
 /// The help command.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Help;
 
 impl Command for Help {

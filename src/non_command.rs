@@ -11,6 +11,7 @@ use log::debug;
 pub async fn handle_non_command(bot: &Bot, msg: Message) -> Option<String> {
     // We only handle those in private chats, to prevent polluting the groups
     if matches!(msg.chat.type_field, ChatType::Private) {
+        debug!("Handling non-command message in PM: {msg:?}");
         let reply = if let Some(origin) = msg.forward_origin {
             // The message is forwarded
             if let MessageOrigin::User(origin_user) = *origin {

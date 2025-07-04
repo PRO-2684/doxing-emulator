@@ -78,7 +78,7 @@ fn detailed_doxing(full_info: ChatFullInfo) -> Option<String> {
     Some(detail)
 }
 
-// TODO: Cache the result for some duration.
+// TODO: Cache the result.
 /// Try to get info about the user, only available if the user has contacted the bot.
 pub async fn get_info(bot: &Bot, user_id: u64) -> Option<ChatFullInfo> {
     let chat_id = match i64::try_from(user_id) {
@@ -106,9 +106,33 @@ fn escape(s: &str) -> String {
     // TODO: More effiency by iterating over chars, estimating resulting size and creating new string
 }
 
-// TODO: Cache the result for some duration.
 /// Try to get [`User`] from given id or username.
-pub async fn get_user(id_or_username: String) -> Option<User> {
-    // TODO: Get user
+pub async fn get_user(bot: &Bot, identifier: String) -> Option<User> {
+    if !identifier.is_ascii() {
+        None
+    } else if identifier.chars().all(|c| c.is_ascii_digit()) {
+        let user_id: u64 = identifier.parse().ok()?;
+        get_user_by_id(bot, user_id).await
+    } else {
+        // let username = identifier.trim_start_matches('@');
+        let mut username = identifier;
+        if username.starts_with('@') {
+            username.drain(..1);
+        }
+        get_user_by_username(bot, username).await
+    }
+}
+
+// TODO: Cache the result.
+/// Try to get [`User`] from given id.
+async fn get_user_by_id(bot: &Bot, user_id: u64) -> Option<User> {
+    // TODO: Get user by id
+    None
+}
+
+// TODO: Cache the result.
+/// Try to get [`User`] from given username. Note that the provided username mustn't start with `@`.
+async fn get_user_by_username(bot: &Bot, username: String) -> Option<User> {
+    // TODO: Get user by username
     None
 }

@@ -10,6 +10,7 @@ use frankenstein::{
 };
 
 /// The dox command.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Dox {
     pub doxee: Option<String>,
 }
@@ -39,7 +40,7 @@ impl Command for Dox {
             // Target provided in command
             Some(doxee) => {
                 // TODO: Resolve provided doxee
-                match get_user(doxee).await {
+                match get_user(bot, doxee).await {
                     Some(user) => user,
                     None => {
                         return include_str!("../messages/user-not-found.html").to_string();

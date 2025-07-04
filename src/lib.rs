@@ -20,7 +20,7 @@ use frankenstein::{
     types::ReplyParameters,
     updates::UpdateContent,
 };
-use log::{debug, error, info};
+use log::{error, info, trace};
 use non_command::handle_non_command;
 use serde::Deserialize;
 use setup::{setup_commands, setup_rights};
@@ -57,7 +57,7 @@ pub async fn run(config: Config) -> Result<()> {
                 update_params.offset.replace((last.update_id + 1).into());
                 // Process each update
                 for update in updates.result {
-                    debug!("Received update: {update:?}");
+                    trace!("Received update: {update:?}");
                     let UpdateContent::Message(msg) = update.content else {
                         // TODO: Handle inline
                         continue;
