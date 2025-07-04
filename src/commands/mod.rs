@@ -1,8 +1,9 @@
-//! Commands for the bot.
+//! Extracts commands from messages and execution.
 
 mod dox;
 mod help;
 
+use super::dox_impl;
 pub use dox::Dox;
 use frankenstein::{client_reqwest::Bot, types::Message};
 pub use help::Help;
@@ -35,7 +36,7 @@ impl Commands {
     #[must_use]
     pub fn parse(text: Option<&String>, username: &str) -> Option<Self> {
         let text = text?.trim();
-        let (command, arg) = text.split_once(' ').unwrap_or((text, ""));
+        let (command, _arg) = text.split_once(' ').unwrap_or((text, ""));
 
         // Two possible command formats:
         // 1. /command <arg>
@@ -56,14 +57,7 @@ impl Commands {
 
         // Match the command
         match command {
-            Dox::TRIGGER => {
-                let doxee = if arg.is_empty() {
-                    None
-                } else {
-                    Some(arg.to_string())
-                };
-                Some(Self::Dox(Dox { doxee }))
-            }
+            Dox::TRIGGER => Some(Self::Dox(Dox)),
             Help::TRIGGER => Some(Self::Help(Help)),
             _ => None,
         }

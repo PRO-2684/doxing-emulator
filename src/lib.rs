@@ -8,6 +8,7 @@
 
 mod commands;
 mod setup;
+mod dox_impl;
 
 use anyhow::{Result, bail};
 pub use commands::{Command, Commands};
@@ -23,7 +24,7 @@ use serde::Deserialize;
 use setup::{setup_commands, setup_rights};
 
 /// Configuration for the bot.
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone, PartialEq, Eq)]
 pub struct Config {
     /// The token for the bot.
     pub token: String,

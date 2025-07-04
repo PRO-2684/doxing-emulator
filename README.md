@@ -8,7 +8,7 @@
 [![Crates.io Total Downloads](https://img.shields.io/crates/d/doxing-emulator?logo=rust)](https://crates.io/crates/doxing-emulator)
 [![docs.rs](https://img.shields.io/docsrs/doxing-emulator?logo=rust)](https://docs.rs/doxing-emulator)
 
-Telegram 开盒模拟器。
+Telegram doxing emulator.
 
 ## ⚙️ Automatic Releases Setup
 
@@ -48,7 +48,7 @@ TODO
 
 ## 📖 Usage
 
-TODO
+Note that you'll need do disable privacy mode for the bot, before adding it to any groups.
 
 ## 🎉 Credits
 
