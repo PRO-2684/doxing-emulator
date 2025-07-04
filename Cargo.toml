@@ -27,6 +27,9 @@ tokio = { version = "1.46.0", features = [
 ] } # Runtime
 toml = { version = "0.8.23", optional = true } # Configuration
 
+[patch.crates-io]
+frankenstein = { path = "../frankenstein" } # Clone from https://github.com/PRO-2684/frankenstein
+
 [[bin]]
 name = "doxing-emulator"
 required-features = ["cli"]

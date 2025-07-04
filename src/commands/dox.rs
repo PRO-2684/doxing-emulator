@@ -49,21 +49,21 @@ impl Command for Dox {
         let mut report = String::new();
         // User ID
         let id = doxee.id;
-        // report.push_str(&format!("用户 ID 是 {id}"));
-        if let Err(e) = write!(report, "用户 ID 是 {id}") {
+        if let Err(e) = write!(report, "您好，请问是用户 ID 为 <code>{id}</code>") {
             warn!("Cannot write to report: {e}");
         }
         // Username
         if let Some(username) = doxee.username {
-            report.push_str("，用户名是 ");
-            report.push_str(&username);
+            if let Err(e) = write!(report, "，用户名为 <code>@{username}</code>") {
+                warn!("Cannot write to report: {e}");
+            }
         }
         // Detailed doxing
         if let Some(detail) = detailed_doxing(bot, id).await {
             report.push_str(&detail);
         }
         // Names & finish report
-        report.push_str(" 的 ");
+        report.push_str(" 的 <code>");
         let first_name = &doxee.first_name;
         report.push_str(&escape(first_name));
         if let Some(last_name) = &doxee.last_name {
@@ -71,9 +71,9 @@ impl Command for Dox {
             report.push_str(&escape(last_name));
         }
         if doxee.is_premium == Some(true) {
-            report.push_str(" 富哥");
+            report.push_str("</code> 富哥吗？");
         } else {
-            report.push_str(" 先生");
+            report.push_str("</code> 先生吗？");
         }
 
         report
@@ -99,11 +99,15 @@ async fn detailed_doxing(bot: &Bot, user_id: u64) -> Option<String> {
     }
     if let Some(birthday) = info.birthdate {
         let Birthdate {
-            year, // Optional???
+            year,
             month,
             day,
         } = birthday;
-        if let Err(e) = write!(detail, "，生日是 {year:04}/{month:02}/{day:02}") {
+        let result = match year {
+            None => write!(detail, "，生日在 {month:02} 月 {day:02} 日"),
+            Some(year) => write!(detail, "，生日在 {year:04} 年 {month:02} 月 {day:02} 日"),
+        };
+        if let Err(e) = result {
             warn!("Cannot write to detail: {e}");
         }
     }
