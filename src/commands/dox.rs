@@ -35,7 +35,7 @@ impl Command for Dox {
             Some(_doxee) => {
                 // TODO: Resolve provided doxee
                 return "TBD".to_string();
-            },
+            }
         };
 
         // Generate doxing report
@@ -44,7 +44,7 @@ impl Command for Dox {
         // TODO: Personal channel
         // TODO: Phone No
         // TODO: Birthday
-        // Use getChatMember for more detail?
+        // Use getChatMember/getChat for more detail?
         // User ID
         let id = doxee.id;
         report.push_str(&format!("用户 ID 是 {id}"));
@@ -56,13 +56,23 @@ impl Command for Dox {
         // Names & finish report
         report.push_str(" 的 ");
         let first_name = &doxee.first_name;
-        report.push_str(first_name);
+        report.push_str(&escape(first_name));
         if let Some(last_name) = &doxee.last_name {
             report.push(' ');
-            report.push_str(last_name);
+            report.push_str(&escape(last_name));
         };
-        report.push_str(" 先生/女士");
+        if doxee.is_premium == Some(true) {
+            report.push_str(" 富哥");
+        } else {
+            report.push_str(" 先生");
+        };
 
         report
     }
+}
+
+/// Escapes the given string, as mentioned by [the docs](https://core.telegram.org/bots/api#html-style) on Telegram.
+fn escape(s: &str) -> String {
+    s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
+    // TODO: More effiency by iterating over chars, estimating resulting size and creating new string
 }

@@ -237,9 +237,7 @@ dependencies = [
  "anyhow",
  "env_logger",
  "frankenstein",
- "lcid",
  "log",
- "rand",
  "serde",
  "tokio",
  "toml",
@@ -702,12 +700,6 @@ dependencies = [
  "once_cell",
  "wasm-bindgen",
 ]
-
-[[package]]
-name = "lcid"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a64d0493f4e4f60a0dcb6a83efeedcee31dde867ae5b4f28aad9405cb2f52ce"
 
 [[package]]
 name = "libc"

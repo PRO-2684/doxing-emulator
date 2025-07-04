@@ -61,13 +61,11 @@ impl Commands {
             Dox::TRIGGER => {
                 let doxee = if arg.is_empty() {
                     None
-                } else { Some({
-                    arg.to_string()
-                }) };
-                Some(Self::Dox(Dox {
-                    doxee
-                }))
-            },
+                } else {
+                    Some({ arg.to_string() })
+                };
+                Some(Self::Dox(Dox { doxee }))
+            }
             Help::TRIGGER => Some(Self::Help(Help)),
             _ => None,
         }
