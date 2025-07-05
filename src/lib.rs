@@ -84,9 +84,7 @@ pub async fn run(config: Config) -> Result<()> {
                                 .reply_parameters(reply_param)
                                 .parse_mode(ParseMode::Html)
                                 .build();
-                            if let Err(err) = bot.send_message(&send_message_param).await {
-                                error!("Failed to send message: {err}");
-                            }
+                            _ = bot.send_message(&send_message_param).await.inspect_err(|e| error!("Failed to send message: {e}"));
                         }
                     });
                 }

@@ -1,7 +1,10 @@
 //! Actual implementation of doxing.
 
 use frankenstein::{
-    client_reqwest::Bot, methods::{GetChatMemberParams, GetChatParams}, types::{Birthdate, ChatFullInfo, ChatMember, ChatType, User}, AsyncTelegramApi
+    AsyncTelegramApi,
+    client_reqwest::Bot,
+    methods::{GetChatMemberParams, GetChatParams},
+    types::{Birthdate, ChatFullInfo, ChatMember, ChatType, User},
 };
 use log::{debug, error, warn};
 use std::fmt::Write;
@@ -12,14 +15,12 @@ pub fn dox(doxee: User, full_info: Option<ChatFullInfo>) -> String {
     let mut report = String::new();
     // User ID
     let id = doxee.id;
-    if let Err(e) = write!(report, "您好，请问是用户 ID 为 <code>{id}</code>") {
-        warn!("Cannot write to report: {e}");
-    }
+    _ = write!(report, "您好，请问是用户 ID 为 <code>{id}</code>")
+        .inspect_err(|e| error!("Cannot write to report: {e}"));
     // Username
     if let Some(username) = doxee.username {
-        if let Err(e) = write!(report, "，用户名为 <code>@{username}</code>") {
-            warn!("Cannot write to report: {e}");
-        }
+        _ = write!(report, "，用户名为 <code>@{username}</code>")
+            .inspect_err(|e| error!("Cannot write to report: {e}"));
     }
     // Detailed doxing if full info provided
     if let Some(full_info) = full_info
@@ -54,19 +55,14 @@ fn detailed_doxing(full_info: ChatFullInfo) -> Option<String> {
     }
     if let Some(birthday) = full_info.birthdate {
         let Birthdate { year, month, day } = birthday;
-        let result = match year {
+        _ = match year {
             None => write!(detail, "，生日在 {month:02} 月 {day:02} 日"),
             Some(year) => write!(detail, "，生日在 {year:04} 年 {month:02} 月 {day:02} 日"),
-        };
-        if let Err(e) = result {
-            warn!("Cannot write to detail: {e}");
-        }
+        }.inspect_err(|e| error!("Cannot write to detail: {e}"));
     }
     if let Some(channel) = full_info.personal_chat {
         if let Some(channel_username) = channel.username {
-            if let Err(e) = write!(detail, "，开通了 tg 空间 @{channel_username}") {
-                warn!("Cannot write to detail: {e}");
-            }
+            _ = write!(detail, "，开通了 tg 空间 @{channel_username}").inspect_err(|e| warn!("Cannot write to detail: {e}"));
         } else {
             warn!("Cannot get username of personal channel: {}", channel.id);
         }
@@ -147,11 +143,11 @@ async fn get_user_by_id(bot: &Bot, user_id: u64) -> Option<User> {
                 ChatMember::Restricted(restricted) => restricted.user,
             };
             Some(user)
-        },
+        }
         Err(e) => {
             debug!("Cannot get user from id {user_id}: {e:?}");
             None
-        },
+        }
     }
 }
 
@@ -160,7 +156,10 @@ async fn get_user_by_id(bot: &Bot, user_id: u64) -> Option<User> {
 ///
 /// Try to get [`User`] from given username. Note that the provided username mustn't start with `@` and should be lowercased for best caching.
 #[allow(dead_code, reason = "Kept for reference")]
-async fn get_user_full_by_username(bot: &Bot, username: String) -> Option<(User, Option<ChatFullInfo>)> {
+async fn get_user_full_by_username(
+    bot: &Bot,
+    username: String,
+) -> Option<(User, Option<ChatFullInfo>)> {
     let get_params = GetChatParams::builder()
         .chat_id(format!("@{username}"))
         .build();
@@ -182,7 +181,7 @@ async fn get_user_full_by_username(bot: &Bot, username: String) -> Option<(User,
         Err(e) => {
             warn!("[get_user_full_by_username] Cannot convert chat_id {chat_id} to user_id: {e:?}");
             return None;
-        },
+        }
     };
     let Some(user) = get_user_by_id(bot, user_id).await else {
         error!("Cannot get user by id, even we've got chat full info");
