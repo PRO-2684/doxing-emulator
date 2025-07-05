@@ -15,7 +15,7 @@ pub async fn handle_inline_query(bot: &Bot, inline: &InlineQuery) -> InlineQuery
     // Reject users that the bot doesn't know
     let doxer = &inline.from;
     let Some(doxer_info) = get_full_info(bot, doxer.id).await else {
-        return create_article(include_str!("./messages/invoker-identification-failed.html"), "ERR_INVOKER_IDENTIFICATION_FAILED", "谁在说话？滚木吗？");
+        return create_article(include_str!("./messages/doxer-identification-failed.html"), "ERR_DOXER_IDENTIFICATION_FAILED", "谁在说话？滚木吗？");
     };
     // Actual doxing
     let query = inline.query.trim();
@@ -27,8 +27,8 @@ pub async fn handle_inline_query(bot: &Bot, inline: &InlineQuery) -> InlineQuery
         create_article(report, format!("开盒 {}", doxee.first_name), "盒盒盒")
     } else {
         create_article(
-            include_str!("./messages/user-identification-failed.html"),
-            "ERR_USER_IDENTIFICATION_FAILED",
+            include_str!("./messages/doxee-identification-failed.html"),
+            "ERR_DOXEE_IDENTIFICATION_FAILED",
             "马冬什么？马冬梅。什么冬梅啊？马冬梅啊。马什么梅啊？行，大爷，您先凉快吧。",
         )
     }

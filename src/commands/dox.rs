@@ -20,7 +20,7 @@ impl Command for Dox {
         let doxer = match msg.from {
             // Can't determine doxer
             None => {
-                return include_str!("../messages/invoker-identification-failed.html")
+                return include_str!("../messages/doxer-identification-failed.html")
                     .to_string();
             }
             Some(doxer) => *doxer,
@@ -28,7 +28,7 @@ impl Command for Dox {
         let doxer_info = match get_full_info(bot, doxer.id).await {
             // Can't determine doxer's full info
             None => {
-                return include_str!("../messages/invoker-identification-failed.html")
+                return include_str!("../messages/doxer-identification-failed.html")
                     .to_string();
             }
             Some(full_info) => full_info,
@@ -42,7 +42,7 @@ impl Command for Dox {
                 // Reply message
                 Some(reply) => match reply.from {
                     None => {
-                        return include_str!("../messages/replied-identification-failed.html")
+                        return include_str!("../messages/doxee-identification-failed.html")
                             .to_string();
                     }
                     Some(sender) => {
@@ -55,7 +55,7 @@ impl Command for Dox {
             Some(doxee) => match get_user_full(bot, &doxee).await {
                 Some(user_and_info) => user_and_info,
                 None => {
-                    return include_str!("../messages/user-identification-failed.html").to_string();
+                    return include_str!("../messages/doxee-identification-failed.html").to_string();
                 }
             },
         };
