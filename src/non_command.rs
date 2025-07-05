@@ -14,6 +14,25 @@ pub async fn handle_non_command(bot: &Bot, msg: Message) -> Option<String> {
         debug!("Handling non-command message in PM: {msg:?}");
         let reply = if let Some(origin) = msg.forward_origin {
             // The message is forwarded
+            // Reject users that the bot doesn't know
+            let doxer = match &msg.from {
+                // Can't determine doxer
+                None => {
+                    return Some(
+                        include_str!("./messages/doxer-identification-failed.html").to_string(),
+                    );
+                }
+                Some(doxer) => doxer,
+            };
+            let _doxer_info = match get_full_info(bot, doxer.id).await {
+                // Can't determine doxer's full info
+                None => {
+                    return Some(
+                        include_str!("./messages/doxer-identification-failed.html").to_string(),
+                    );
+                }
+                Some(full_info) => full_info,
+            };
             if let MessageOrigin::User(origin_user) = *origin {
                 // ... from a user
                 let doxee = origin_user.sender_user;

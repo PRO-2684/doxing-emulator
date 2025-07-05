@@ -56,7 +56,7 @@ fn create_article(
 /// Create a button that sends /help to the bot.
 pub fn help_button() -> InlineQueryResultsButton {
     InlineQueryResultsButton::builder()
-        .text("查看帮助")
+        .text("遇到 ERR? 点我查看帮助!")
         .start_parameter("help")
         .build()
 }
