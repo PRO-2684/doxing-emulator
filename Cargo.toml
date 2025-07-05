@@ -13,6 +13,7 @@ authors = ["PRO-2684"]
 
 [dependencies]
 anyhow = "1.0.98"
+cached = { version = "0.55.1", default-features = false, features = ["proc_macro", "async", "async_tokio_rt_multi_thread"] }
 env_logger = "0.11.8" # Logging
 frankenstein = { version = "0.41.0", features = [
     "client-reqwest",

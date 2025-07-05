@@ -8,6 +8,7 @@ use frankenstein::{
 };
 use log::{debug, error, warn};
 use std::fmt::Write;
+use cached::proc_macro::cached;
 
 /// Dox given [`User`] and optional [`ChatFullInfo`].
 pub fn dox(doxee: &User, full_info: Option<&ChatFullInfo>) -> String {
@@ -73,8 +74,8 @@ fn detailed_doxing(full_info: &ChatFullInfo) -> Option<String> {
     Some(detail)
 }
 
-// TODO: Cache the result.
 /// Try to get full info about the user, only available if the user has contacted the bot.
+#[cached(size = 64, time = 60, key = "u64", convert = r#"{ user_id }"#, sync_writes = "by_key")]
 pub async fn get_full_info(bot: &Bot, user_id: u64) -> Option<ChatFullInfo> {
     let chat_id = match i64::try_from(user_id) {
         Ok(id) => id,
@@ -120,8 +121,8 @@ pub async fn get_user_full(bot: &Bot, identifier: &str) -> Option<(User, Option<
     }
 }
 
-// TODO: Cache the result.
 /// Try to get [`User`] from given id.
+#[cached(size = 64, time = 60, key = "u64", convert = r#"{ user_id }"#, sync_writes = "by_key")]
 async fn get_user_by_id(bot: &Bot, user_id: u64) -> Option<User> {
     let chat_id = match i64::try_from(user_id) {
         Ok(id) => id,
