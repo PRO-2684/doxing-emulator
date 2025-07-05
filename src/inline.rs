@@ -1,6 +1,6 @@
 //! Module for handling inline queries.
 
-use super::dox_impl::{dox, get_user_full};
+use super::dox_impl::{dox, get_user_full, get_full_info};
 use frankenstein::{
     ParseMode,
     client_reqwest::Bot,
@@ -13,9 +13,14 @@ use frankenstein::{
 /// Handle inline queries.
 pub async fn handle_inline_query(bot: &Bot, inline: &InlineQuery) -> InlineQueryResult {
     let doxee = inline.query.trim();
-    let article = if let Some((user, full_info)) = get_user_full(bot, doxee).await {
-        let report = dox(&user, full_info.as_ref());
-        create_article(report, format!("开盒 {}", user.first_name), "盒盒盒")
+    let article = if doxee.is_empty() {
+        let doxee = &inline.from;
+        let full_info = get_full_info(bot, doxee.id).await;
+        let report = dox(&doxee, full_info.as_ref());
+        create_article(report, format!("开盒 {}", doxee.first_name), "盒盒盒")
+    } else if let Some((doxee, full_info)) = get_user_full(bot, doxee).await {
+        let report = dox(&doxee, full_info.as_ref());
+        create_article(report, format!("开盒 {}", doxee.first_name), "盒盒盒")
     } else {
         create_article(
             include_str!("./messages/user-identification-failed.html"),
