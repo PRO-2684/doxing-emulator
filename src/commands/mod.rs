@@ -68,7 +68,7 @@ impl Commands {
                 };
                 Some(Self::Dox(Dox { doxee }))
             }
-            Help::TRIGGER => Some(Self::Help(Help)),
+            Help::TRIGGER | "start" => Some(Self::Help(Help)),
             _ => None,
         }
     }
