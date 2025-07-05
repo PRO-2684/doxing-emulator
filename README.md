@@ -10,20 +10,6 @@
 
 Telegram doxing emulator.
 
-## ⚙️ Automatic Releases Setup
-
-1. [Create a new GitHub repository](https://github.com/new) with the name `doxing-emulator` and push this generated project to it.
-2. Enable Actions for the repository, and grant "Read and write permissions" to the workflow [here](https://github.com/PRO-2684/doxing-emulator/settings/actions).
-3. [Generate an API token on crates.io](https://crates.io/settings/tokens/new), with the following setup:
-
-    - `Name`: `doxing-emulator`
-    - `Expiration`: `No expiration`
-    - `Scopes`: `publish-new`, `publish-update`
-    - `Crates`: `doxing-emulator`
-
-4. [Add a repository secret](https://github.com/PRO-2684/doxing-emulator/settings/secrets/actions/new) named `CARGO_TOKEN` with the generated token as its value.
-5. Consider removing this section and updating this README with your own project information.
-
 ## 📥 Installation
 
 ### Using [`binstall`](https://github.com/cargo-bins/cargo-binstall)
@@ -42,14 +28,33 @@ Navigate to the [Releases page](https://github.com/PRO-2684/doxing-emulator/rele
 cargo install doxing-emulator
 ```
 
-## 💡 Examples
+## 🛠️ Setup
 
-TODO
+### 🤖 Bot
+
+1. Go to [@BotFather](https://t.me/BotFather) and create a bot.
+2. Enable [Inline Mode](https://core.telegram.org/bots/inline) and disable [Privacy Mode](https://core.telegram.org/bots/features#privacy-mode).
+    - By enabling inline mode, you can dox in any chat via inline queries.
+    - By disabling privacy mode, the bot can know who you've replied with a `/dox` command, so it can dox him for you.
+3. Customize name, description etc. as u wish.
+
+### ⚙️ Configuration
+
+The configuration file is in the format of TOML, with the following key(s):
+
+- `token`: The token for the bot.
+
+### ▶️ Running
+
+```shell
+doxing-emulator path/to/config.toml
+```
+
+If the path is not specified, defaults to `config.toml`.
 
 ## 📖 Usage
 
-Note that you'll need to disable privacy mode and enable inline mode for the bot, before adding it to any groups.
-
-## 🎉 Credits
-
-TODO
+- `/dox <user_id>` - doxes the user with provided user id
+- Reply a message with `/dox` - doxes the sender of the replied message
+- Forward a message to the bot - doxes the sender of the forwarded message
+- Inline query - doxes the user with provided user id
