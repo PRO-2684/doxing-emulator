@@ -6,12 +6,13 @@
     <b><u>转发消息</u></b>：将某人的消息转发至此机器人，即可对 ta 进行开盒。
     <b><u>Inline 使用</u></b>：在任意聊天界面提及此 bot，并提供用户 ID，则开盒此 ID 的用户。
     <i>* 如果未指定目标，则是开自己的盒。</i>
+    <i>* bot 的查询设有 60s 的缓存，因此您可能需要等待一段时间后才能查询到更改的内容。</i>
 </blockquote>
 <b>== 错误代码 ==</b>
 <blockquote expandable>
     <b><u>ERR_INCOMPREHENSIBLE</u></b>: 无法理解的消息。消息既不是转发的，也不是指令。
     <b><u>ERR_INVALID_ORIGIN</u></b>: 转发来源不是用户，或者被隐藏。
-    <b><u>ERR_INVOKER_IDENTIFICATION_FAILED</u></b>: 无法确定指令发送者的身份。
+    <b><u>ERR_INVOKER_IDENTIFICATION_FAILED</u></b>: 无法确定指令发送者的身份。您可以向 bot 发送 /start 指令后等待 60s 再次尝试。
     <b><u>ERR_REPLIED_IDENTIFICATION_FAILED</u></b>: 无法确定被回复消息发送者的身份。
     <b><u>ERR_USER_IDENTIFICATION_FAILED</u></b>: 无法确定指定用户的身份。可能是提供的并非 ID，或者用户不存在，或者 bot “不认识”此用户。在最后一种情况下，您可以尝试先转发此用户的消息到此 bot，从而让 bot “认识”此用户。
 </blockquote>

@@ -46,7 +46,7 @@ pub fn dox(doxee: &User, full_info: Option<&ChatFullInfo>) -> String {
     report
 }
 
-/// Detailed doxing, only available if the user has contacted the bot.
+/// Detailed doxing.
 fn detailed_doxing(full_info: &ChatFullInfo) -> Option<String> {
     let user_id = full_info.id;
     let mut detail = String::new();
@@ -54,6 +54,7 @@ fn detailed_doxing(full_info: &ChatFullInfo) -> Option<String> {
         warn!("Trying to dox a non-private chat: {user_id}");
         return None;
     }
+    // TODO: BusinessLocation
     if let Some(birthday) = &full_info.birthdate {
         let Birthdate { year, month, day } = birthday;
         _ = match year {
@@ -74,7 +75,7 @@ fn detailed_doxing(full_info: &ChatFullInfo) -> Option<String> {
     Some(detail)
 }
 
-/// Try to get full info about the user, only available if the user has contacted the bot.
+/// Try to get full info about the user.
 #[cached(size = 64, time = 60, key = "u64", convert = r#"{ user_id }"#, sync_writes = "by_key")]
 pub async fn get_full_info(bot: &Bot, user_id: u64) -> Option<ChatFullInfo> {
     let chat_id = match i64::try_from(user_id) {
