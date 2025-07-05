@@ -1,7 +1,17 @@
 <b>== 开盒模拟器使用说明 ==</b>
-您可以通过下列任一方式使用 /dox 指令对他人进行开盒：
-<b><u>提供用户 ID</u></b>：若 dox 指令后为一串数字，则开盒此 ID 的用户。
-<b><u>回复消息</u></b>：若 bot 在群聊中，使用 dox 指令回复某人的消息即可对 ta 进行开盒。
-<b><u>转发消息</u></b>：将某人的消息转发至此机器人，即可对 ta 进行开盒。
-<b><u>Inline 使用 (TBD)</u></b>：TBD。
-<i>* 如果无法确定目标，则是开自己的盒。</i>
+<blockquote expandable>
+    您可以通过下列任一方式使用 /dox 指令对他人进行开盒：
+    <b><u>提供用户 ID</u></b>：若 dox 指令后为一串数字，则开盒此 ID 的用户。
+    <b><u>回复消息</u></b>：若 bot 在群聊中，使用 dox 指令回复某人的消息即可对 ta 进行开盒。
+    <b><u>转发消息</u></b>：将某人的消息转发至此机器人，即可对 ta 进行开盒。
+    <b><u>Inline 使用 (TBD)</u></b>：TBD。
+    <i>* 如果无法确定目标，则是开自己的盒。</i>
+</blockquote>
+<b>== 错误代码 ==</b>
+<blockquote expandable>
+    <b><u>ERR_INCOMPREHENSIBLE</u></b>: 无法理解的消息。消息既不是转发的，也不是指令。
+    <b><u>ERR_INVALID_ORIGIN</u></b>: 转发来源不是用户，或者被隐藏。
+    <b><u>ERR_INVOKER_IDENTIFICATION_FAILED</u></b>: 无法确定指令发送者的身份。
+    <b><u>ERR_REPLIED_IDENTIFICATION_FAILED</u></b>: 无法确定被回复消息发送者的身份。
+    <b><u>ERR_USER_IDENTIFICATION_FAILED</u></b>: 无法确定指定用户的身份。可能是提供的并非 ID，或者用户不存在，或者 bot “不认识”此用户。在最后一种情况下，您可以尝试先转发此用户的消息到此 bot，从而让 bot “认识”此用户。
+</blockquote>
