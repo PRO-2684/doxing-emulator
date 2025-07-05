@@ -28,6 +28,7 @@ tokio = { version = "1.46.0", features = [
 ] } # Runtime
 toml = { version = "0.8.23", optional = true } # Configuration
 
+# TODO: Delete this patch when frankenstein is updated
 [patch.crates-io]
 frankenstein = { path = "../frankenstein" } # Clone from https://github.com/PRO-2684/frankenstein
 
