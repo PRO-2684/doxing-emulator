@@ -8,6 +8,7 @@
 
 mod commands;
 mod dox_impl;
+mod inline;
 mod non_command;
 mod setup;
 
@@ -16,7 +17,7 @@ pub use commands::{Command, Commands};
 use frankenstein::{
     AsyncTelegramApi, ParseMode,
     client_reqwest::Bot,
-    methods::{GetUpdatesParams, SendMessageParams},
+    methods::{AnswerInlineQueryParams, GetUpdatesParams, SendMessageParams},
     types::ReplyParameters,
     updates::UpdateContent,
 };
@@ -62,38 +63,54 @@ pub async fn run(config: Config) -> Result<()> {
                 // Process each update
                 for update in updates.result {
                     trace!("Received update: {update:?}");
-                    let UpdateContent::Message(msg) = update.content else {
-                        // TODO: Handle inline
-                        continue;
-                    };
-
-                    // Handling messages
-                    let bot = bot.clone();
-                    let parsed = Commands::parse(msg.text.as_ref(), &username);
-                    tokio::spawn(async move {
-                        let chat_id = msg.chat.id;
-                        let message_id = msg.message_id;
-                        let reply = match parsed {
-                            // Commands
-                            Some(command) => Some(command.execute(&bot, *msg).await),
-                            // Non-commands, can be forwarded messages or others
-                            None => handle_non_command(&bot, *msg).await,
-                        };
-                        if let Some(reply) = reply {
-                            let reply_param =
-                                ReplyParameters::builder().message_id(message_id).build();
-                            let send_message_param = SendMessageParams::builder()
-                                .chat_id(chat_id)
-                                .text(reply)
-                                .reply_parameters(reply_param)
-                                .parse_mode(ParseMode::Html)
-                                .build();
-                            _ = bot
-                                .send_message(&send_message_param)
-                                .await
-                                .inspect_err(|e| error!("Failed to send message: {e}"));
+                    match update.content {
+                        UpdateContent::Message(msg) => {
+                            // Handling messages
+                            let bot = bot.clone();
+                            let parsed = Commands::parse(msg.text.as_ref(), &username);
+                            tokio::spawn(async move {
+                                let chat_id = msg.chat.id;
+                                let message_id = msg.message_id;
+                                let reply = match parsed {
+                                    // Commands
+                                    Some(command) => Some(command.execute(&bot, *msg).await),
+                                    // Non-commands, can be forwarded messages or others
+                                    None => handle_non_command(&bot, *msg).await,
+                                };
+                                if let Some(reply) = reply {
+                                    let reply_param =
+                                        ReplyParameters::builder().message_id(message_id).build();
+                                    let send_message_param = SendMessageParams::builder()
+                                        .chat_id(chat_id)
+                                        .text(reply)
+                                        .reply_parameters(reply_param)
+                                        .parse_mode(ParseMode::Html)
+                                        .build();
+                                    _ = bot
+                                        .send_message(&send_message_param)
+                                        .await
+                                        .inspect_err(|e| error!("Failed to send message: {e}"));
+                                }
+                            });
                         }
-                    });
+                        UpdateContent::InlineQuery(inline) => {
+                            // Handling inline queries
+                            let bot = bot.clone();
+                            tokio::spawn(async move {
+                                let result = inline::handle_inline_query(&bot, &inline).await;
+                                let answer_param = AnswerInlineQueryParams::builder()
+                                    .inline_query_id(inline.id)
+                                    .results(vec![result])
+                                    .button(inline::help_button())
+                                    .build();
+                                _ = bot
+                                    .answer_inline_query(&answer_param)
+                                    .await
+                                    .inspect_err(|e| error!("Failed to answer inline query: {e}"));
+                            });
+                        }
+                        _ => {}
+                    }
                 }
             }
             Err(err) => {

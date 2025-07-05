@@ -10,7 +10,7 @@ use log::{debug, error, warn};
 use std::fmt::Write;
 
 /// Dox given [`User`] and optional [`ChatFullInfo`].
-pub fn dox(doxee: User, full_info: Option<ChatFullInfo>) -> String {
+pub fn dox(doxee: &User, full_info: Option<&ChatFullInfo>) -> String {
     // Generate doxing report
     let mut report = String::new();
     // User ID
@@ -18,7 +18,7 @@ pub fn dox(doxee: User, full_info: Option<ChatFullInfo>) -> String {
     _ = write!(report, "您好，请问是用户 ID 为 <code>{id}</code>")
         .inspect_err(|e| error!("Cannot write to report: {e}"));
     // Username
-    if let Some(username) = doxee.username {
+    if let Some(username) = &doxee.username {
         _ = write!(report, "，用户名为 <code>@{username}</code>")
             .inspect_err(|e| error!("Cannot write to report: {e}"));
     }
@@ -46,14 +46,14 @@ pub fn dox(doxee: User, full_info: Option<ChatFullInfo>) -> String {
 }
 
 /// Detailed doxing, only available if the user has contacted the bot.
-fn detailed_doxing(full_info: ChatFullInfo) -> Option<String> {
+fn detailed_doxing(full_info: &ChatFullInfo) -> Option<String> {
     let user_id = full_info.id;
     let mut detail = String::new();
     if !matches!(full_info.type_field, ChatType::Private) {
         warn!("Trying to dox a non-private chat: {user_id}");
         return None;
     }
-    if let Some(birthday) = full_info.birthdate {
+    if let Some(birthday) = &full_info.birthdate {
         let Birthdate { year, month, day } = birthday;
         _ = match year {
             None => write!(detail, "，生日在 {month:02} 月 {day:02} 日"),
@@ -61,8 +61,8 @@ fn detailed_doxing(full_info: ChatFullInfo) -> Option<String> {
         }
         .inspect_err(|e| error!("Cannot write to detail: {e}"));
     }
-    if let Some(channel) = full_info.personal_chat {
-        if let Some(channel_username) = channel.username {
+    if let Some(channel) = &full_info.personal_chat {
+        if let Some(channel_username) = &channel.username {
             _ = write!(detail, "，开通了 tg 空间 @{channel_username}")
                 .inspect_err(|e| warn!("Cannot write to detail: {e}"));
         } else {
@@ -101,8 +101,8 @@ fn escape(s: &str) -> String {
     // TODO: More effiency by iterating over chars, estimating resulting size and creating new string
 }
 
-/// Try to get [`User`] and its full info from given id or username.
-pub async fn get_user_full(bot: &Bot, identifier: String) -> Option<(User, Option<ChatFullInfo>)> {
+/// Try to get [`User`] and its full info from given id ~~or username~~.
+pub async fn get_user_full(bot: &Bot, identifier: &str) -> Option<(User, Option<ChatFullInfo>)> {
     if !identifier.is_ascii() {
         None
     } else if identifier.chars().all(|c| c.is_ascii_digit()) {
@@ -153,7 +153,6 @@ async fn get_user_by_id(bot: &Bot, user_id: u64) -> Option<User> {
     }
 }
 
-// TODO: Cache the result.
 /// **Won't work. Kept for reference only.**
 ///
 /// Try to get [`User`] from given username. Note that the provided username mustn't start with `@` and should be lowercased for best caching.

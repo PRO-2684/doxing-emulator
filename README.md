@@ -48,7 +48,7 @@ TODO
 
 ## 📖 Usage
 
-Note that you'll need do disable privacy mode for the bot, before adding it to any groups.
+Note that you'll need to disable privacy mode and enable inline mode for the bot, before adding it to any groups.
 
 ## 🎉 Credits
 

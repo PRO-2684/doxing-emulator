@@ -18,7 +18,7 @@ pub async fn handle_non_command(bot: &Bot, msg: Message) -> Option<String> {
                 // ... from a user
                 let doxee = origin_user.sender_user;
                 let full_info = get_full_info(bot, doxee.id).await;
-                dox(doxee, full_info)
+                dox(&doxee, full_info.as_ref())
             } else {
                 // ... from something else
                 debug!("Cannot determine the origin as a user: {origin:?}");

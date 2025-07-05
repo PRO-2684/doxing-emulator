@@ -26,7 +26,8 @@ impl Command for Dox {
                     None => match msg.from {
                         // Can't determine sender
                         None => {
-                            return include_str!("../messages/invoker-identification-failed.html").to_string();
+                            return include_str!("../messages/invoker-identification-failed.html")
+                                .to_string();
                         }
                         // Fallback to sender
                         Some(sender) => *sender,
@@ -34,7 +35,8 @@ impl Command for Dox {
                     // Reply message
                     Some(reply) => match reply.from {
                         None => {
-                            return include_str!("../messages/replied-identification-failed.html").to_string();
+                            return include_str!("../messages/replied-identification-failed.html")
+                                .to_string();
                         }
                         Some(sender) => *sender,
                     },
@@ -43,17 +45,15 @@ impl Command for Dox {
                 (user, full_info)
             }
             // Target provided in command
-            Some(doxee) => {
-                match get_user_full(bot, doxee).await {
-                    Some(user_and_info) => user_and_info,
-                    None => {
-                        return include_str!("../messages/user-identification-failed.html").to_string();
-                    }
+            Some(doxee) => match get_user_full(bot, &doxee).await {
+                Some(user_and_info) => user_and_info,
+                None => {
+                    return include_str!("../messages/user-identification-failed.html").to_string();
                 }
-            }
+            },
         };
 
         // let full_info = get_info(bot, doxee.id).await;
-        dox(doxee, full_info)
+        dox(&doxee, full_info.as_ref())
     }
 }
