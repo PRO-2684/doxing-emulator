@@ -4,10 +4,7 @@ use super::{
     Command,
     dox_impl::{dox, get_full_info, get_user_full},
 };
-use frankenstein::{
-    client_reqwest::Bot,
-    types::Message,
-};
+use frankenstein::{client_reqwest::Bot, types::Message};
 
 /// The dox command.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -28,19 +25,23 @@ impl Command for Dox {
                     // Not a reply message
                     None => match msg.from {
                         // Can't determine sender
-                        None => return include_str!("../messages/invoke-no-sender.html").to_string(),
+                        None => {
+                            return include_str!("../messages/invoke-no-sender.html").to_string();
+                        }
                         // Fallback to sender
                         Some(sender) => *sender,
                     },
                     // Reply message
                     Some(reply) => match reply.from {
-                        None => return include_str!("../messages/reply-no-sender.html").to_string(),
+                        None => {
+                            return include_str!("../messages/reply-no-sender.html").to_string();
+                        }
                         Some(sender) => *sender,
                     },
                 };
                 let full_info = get_full_info(bot, user.id).await;
                 (user, full_info)
-            },
+            }
             // Target provided in command
             Some(doxee) => {
                 // TODO: Resolve provided doxee

@@ -33,6 +33,10 @@ pub struct Config {
 }
 
 /// Runs the bot.
+///
+/// ## Errors
+///
+/// Errors if setting up or determining username failed.
 pub async fn run(config: Config) -> Result<()> {
     let token = config.token;
     let bot = Bot::new(&token);
@@ -84,7 +88,10 @@ pub async fn run(config: Config) -> Result<()> {
                                 .reply_parameters(reply_param)
                                 .parse_mode(ParseMode::Html)
                                 .build();
-                            _ = bot.send_message(&send_message_param).await.inspect_err(|e| error!("Failed to send message: {e}"));
+                            _ = bot
+                                .send_message(&send_message_param)
+                                .await
+                                .inspect_err(|e| error!("Failed to send message: {e}"));
                         }
                     });
                 }

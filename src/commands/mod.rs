@@ -16,7 +16,7 @@ pub trait Command {
     /// Help message.
     const HELP: &'static str;
     /// Execute the command.
-    async fn execute(self, bot: &Bot, msg: Message) -> String;
+    fn execute(self, bot: &Bot, msg: Message) -> impl Future<Output = String> + Send;
 }
 
 /// Available commands.
@@ -67,7 +67,7 @@ impl Commands {
                     Some(arg.to_string())
                 };
                 Some(Self::Dox(Dox { doxee }))
-            },
+            }
             Help::TRIGGER => Some(Self::Help(Help)),
             _ => None,
         }

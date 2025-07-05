@@ -58,11 +58,13 @@ fn detailed_doxing(full_info: ChatFullInfo) -> Option<String> {
         _ = match year {
             None => write!(detail, "，生日在 {month:02} 月 {day:02} 日"),
             Some(year) => write!(detail, "，生日在 {year:04} 年 {month:02} 月 {day:02} 日"),
-        }.inspect_err(|e| error!("Cannot write to detail: {e}"));
+        }
+        .inspect_err(|e| error!("Cannot write to detail: {e}"));
     }
     if let Some(channel) = full_info.personal_chat {
         if let Some(channel_username) = channel.username {
-            _ = write!(detail, "，开通了 tg 空间 @{channel_username}").inspect_err(|e| warn!("Cannot write to detail: {e}"));
+            _ = write!(detail, "，开通了 tg 空间 @{channel_username}")
+                .inspect_err(|e| warn!("Cannot write to detail: {e}"));
         } else {
             warn!("Cannot get username of personal channel: {}", channel.id);
         }
