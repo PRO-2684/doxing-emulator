@@ -4,7 +4,7 @@ use super::{
     Command,
     dox_impl::{dox, get_full_info, get_user_full},
 };
-use frankenstein::{client_reqwest::Bot, types::Message};
+use frankenstein::{client_reqwest::Bot, types::{Message, MessageOrigin}};
 
 /// The dox command.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -37,8 +37,22 @@ impl Command for Dox {
         let (doxee, doxee_info) = match self.doxee {
             // Target not provided in command
             None => match msg.reply_to_message {
-                // Not a reply message - fallback to doxer
-                None => (doxer, Some(doxer_info)),
+                // Not a reply message - try external reply
+                None => match msg.external_reply {
+                    // Not an external reply message - fallback to doxer
+                    None => (doxer, Some(doxer_info)),
+                    // External reply message
+                    Some(external) => match external.origin.expect("Origin should always be available") {
+                        MessageOrigin::User(user) => {
+                            let sender = user.sender_user;
+                            let full_info = get_full_info(bot, sender.id).await;
+                            (sender, full_info)
+                        }
+                        _ => {
+                            return include_str!("../messages/invalid-origin.html").to_string();
+                        }
+                    },
+                }
                 // Reply message
                 Some(reply) => match reply.from {
                     None => {

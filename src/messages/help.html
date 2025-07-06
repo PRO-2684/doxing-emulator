@@ -2,7 +2,7 @@
 <blockquote expandable>
     您可以通过下列任一方式使用 /dox 指令对他人进行开盒：
     <b><u>提供用户 ID</u></b>：若 dox 指令后为一串数字，则开盒此 ID 的用户。
-    <b><u>回复消息</u></b>：若 bot 在群聊中，使用 dox 指令回复某人的消息即可对 ta 进行开盒。
+    <b><u>回复或引用消息</u></b>：若 bot 在群聊中，使用 dox 指令回复某人的消息即可对 ta 进行开盒。亦可在私聊中用 dox 指令引用其它地方的消息。
     <b><u>转发消息</u></b>：将某人的消息转发至此机器人，即可对 ta 进行开盒。
     <b><u>Inline 使用</u></b>：在任意聊天界面提及此 bot，并提供用户 ID，则开盒此 ID 的用户。
     <i>* 如果未指定目标，则是开自己的盒。</i>
@@ -12,6 +12,6 @@
 <blockquote expandable>
     <b><u>ERR_DOXEE_IDENTIFICATION_FAILED</u></b>: 无法确定被开盒者的身份。如果是回复的消息，可能对方是匿名状态；如果提供了参数，可能提供的并非 ID，或者用户不存在，或者 bot “不认识”此用户。在最后一种情况下，您可以尝试先转发此用户的消息到此 bot，从而让 bot “认识”此用户。
     <b><u>ERR_DOXER_IDENTIFICATION_FAILED</u></b>: 无法确定指令发送者的身份。您可以向 bot 发送 /start 指令后等待 60s 再次尝试。
-    <b><u>ERR_INCOMPREHENSIBLE</u></b>: 无法理解的消息。消息既不是转发的，也不是指令。
-    <b><u>ERR_INVALID_ORIGIN</u></b>: 转发来源不是用户，或者被隐藏。
+    <b><u>ERR_INCOMPREHENSIBLE</u></b>: 无法理解的消息。消息既不是转发或引用的，也不是指令。
+    <b><u>ERR_INVALID_ORIGIN</u></b>: 转发或引用来源不是用户，或者被隐藏。
 </blockquote>
