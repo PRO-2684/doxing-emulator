@@ -53,7 +53,7 @@ fn create_article(
     InlineQueryResult::Article(article)
 }
 
-/// Create a button that sends /help to the bot.
+/// Create a button that sends `/start help` to the bot.
 pub fn help_button() -> InlineQueryResultsButton {
     InlineQueryResultsButton::builder()
         .text("遇到 ERR? 点我查看帮助!")
