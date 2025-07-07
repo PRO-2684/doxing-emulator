@@ -42,7 +42,7 @@ impl Command for Dox {
                     // Not an external reply message - fallback to doxer
                     None => (doxer, Some(doxer_info)),
                     // External reply message
-                    Some(external) => match external.origin.expect("Origin should always be available") {
+                    Some(external) => match external.origin {
                         MessageOrigin::User(user) => {
                             let sender = user.sender_user;
                             let full_info = get_full_info(bot, sender.id).await;
