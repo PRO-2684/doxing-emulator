@@ -102,6 +102,7 @@ pub async fn run(config: Config) -> Result<()> {
                                     .inline_query_id(inline.id)
                                     .results(vec![result])
                                     .button(inline::help_button())
+                                    .cache_time(60)
                                     .build();
                                 _ = bot
                                     .answer_inline_query(&answer_param)

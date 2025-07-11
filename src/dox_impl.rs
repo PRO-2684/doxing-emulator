@@ -83,10 +83,11 @@ fn detailed_doxing(full_info: &ChatFullInfo) -> Option<String> {
 /// Try to get full info about the user.
 #[cached(
     size = 64,
-    time = 60,
+    time = 300,
     key = "u64",
     convert = r#"{ user_id }"#,
-    sync_writes = "by_key"
+    sync_writes = "by_key",
+    option = true,
 )]
 pub async fn get_full_info(bot: &Bot, user_id: u64) -> Option<ChatFullInfo> {
     let chat_id = match i64::try_from(user_id) {
@@ -136,10 +137,11 @@ pub async fn get_user_full(bot: &Bot, identifier: &str) -> Option<(User, Option<
 /// Try to get [`User`] from given id.
 #[cached(
     size = 64,
-    time = 60,
+    time = 300,
     key = "u64",
     convert = r#"{ user_id }"#,
-    sync_writes = "by_key"
+    sync_writes = "by_key",
+    option = true,
 )]
 async fn get_user_by_id(bot: &Bot, user_id: u64) -> Option<User> {
     let chat_id = match i64::try_from(user_id) {
