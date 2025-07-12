@@ -117,7 +117,7 @@ jobs:
       uses: rust-lang/crates-io-auth-action@v1
       id: auth
     - name: Publish to crates.io
-      run: git diff && cargo publish
+      run: git diff && git diff --staged && cargo publish
       env:
         CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
 
