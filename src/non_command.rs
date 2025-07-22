@@ -5,13 +5,13 @@ use frankenstein::{
     client_reqwest::Bot,
     types::{ChatType, Message, MessageOrigin},
 };
-use log::debug;
+use log::{debug, info};
 
 /// Handles non-command messages.
 pub async fn handle_non_command(bot: &Bot, msg: Message) -> Option<String> {
     // We only handle those in private chats, to prevent polluting the groups
     if matches!(msg.chat.type_field, ChatType::Private) {
-        debug!("Handling non-command message in PM: {msg:?}");
+        info!("Handling non-command message in PM: {msg:?}");
         let reply = if let Some(origin) = msg.forward_origin {
             // The message is forwarded
             // Reject users that the bot doesn't know

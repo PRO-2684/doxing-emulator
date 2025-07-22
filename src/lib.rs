@@ -17,6 +17,7 @@ pub use commands::{Command, Commands};
 use frankenstein::{
     AsyncTelegramApi, ParseMode,
     client_reqwest::Bot,
+    inline_mode::InlineQueryResult,
     methods::{AnswerInlineQueryParams, GetUpdatesParams, SendMessageParams},
     types::ReplyParameters,
     updates::UpdateContent,
@@ -78,6 +79,7 @@ pub async fn run(config: Config) -> Result<()> {
                                     None => handle_non_command(&bot, *msg).await,
                                 };
                                 if let Some(reply) = reply {
+                                    info!("Reply: {reply}");
                                     let reply_param =
                                         ReplyParameters::builder().message_id(message_id).build();
                                     let send_message_param = SendMessageParams::builder()
@@ -97,7 +99,9 @@ pub async fn run(config: Config) -> Result<()> {
                             // Handling inline queries
                             let bot = bot.clone();
                             tokio::spawn(async move {
-                                let result = inline::handle_inline_query(&bot, &inline).await;
+                                let article = inline::handle_inline_query(&bot, &inline).await;
+                                info!("Answer: {:?}", article.input_message_content);
+                                let result = InlineQueryResult::Article(article);
                                 let answer_param = AnswerInlineQueryParams::builder()
                                     .inline_query_id(inline.id)
                                     .results(vec![result])

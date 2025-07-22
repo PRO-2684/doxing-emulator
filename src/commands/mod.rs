@@ -7,7 +7,7 @@ use super::dox_impl;
 pub use dox::Dox;
 use frankenstein::{client_reqwest::Bot, types::Message};
 pub use help::Help;
-use log::debug;
+use log::info;
 
 /// A command.
 pub trait Command {
@@ -75,7 +75,7 @@ impl Commands {
 
     /// Execute the command.
     pub async fn execute(self, bot: &Bot, msg: Message) -> String {
-        debug!("Executing command: {self:?}");
+        info!("Executing command: {self:?}");
         match self {
             Self::Help(help) => help.execute(bot, msg).await,
             Self::Dox(dox) => dox.execute(bot, msg).await,

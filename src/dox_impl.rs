@@ -7,7 +7,7 @@ use frankenstein::{
     methods::{GetChatMemberParams, GetChatParams},
     types::{Birthdate, ChatFullInfo, ChatMember, ChatType, User},
 };
-use log::{debug, error, warn};
+use log::{error, warn};
 use std::fmt::Write;
 use tokio::time::Duration;
 
@@ -169,7 +169,7 @@ async fn get_user_by_id(bot: &Bot, user_id: u64) -> Option<User> {
             Some(user)
         }
         Err(e) => {
-            debug!("Cannot get user from id {user_id}: {e:?}");
+            warn!("Cannot get user from id {user_id}: {e:?}");
             None
         }
     }

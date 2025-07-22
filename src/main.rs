@@ -1,6 +1,6 @@
 #![warn(clippy::all, clippy::nursery, clippy::pedantic, clippy::cargo)]
 
-use anyhow::{Ok, Result};
+use anyhow::Result;
 use doxing_emulator::{Config, run};
 use env_logger::Env;
 use std::io::Write;

@@ -5,13 +5,15 @@ use frankenstein::{
     ParseMode,
     client_reqwest::Bot,
     inline_mode::{
-        InlineQuery, InlineQueryResult, InlineQueryResultArticle, InlineQueryResultsButton,
-        InputMessageContent, InputTextMessageContent,
+        InlineQuery, InlineQueryResultArticle, InlineQueryResultsButton, InputMessageContent,
+        InputTextMessageContent,
     },
 };
+use log::info;
 
 /// Handle inline queries.
-pub async fn handle_inline_query(bot: &Bot, inline: &InlineQuery) -> InlineQueryResult {
+pub async fn handle_inline_query(bot: &Bot, inline: &InlineQuery) -> InlineQueryResultArticle {
+    info!("Handling inline query: {}", inline.query);
     // Reject users that the bot doesn't know
     let doxer = &inline.from;
     let Some(doxer_info) = get_full_info(bot, doxer.id).await else {
@@ -43,18 +45,17 @@ fn create_article(
     message: impl Into<String>,
     title: impl Into<String>,
     description: impl Into<String>,
-) -> InlineQueryResult {
+) -> InlineQueryResultArticle {
     let content = InputTextMessageContent::builder()
         .message_text(message)
         .parse_mode(ParseMode::Html)
         .build();
-    let article = InlineQueryResultArticle::builder()
+    InlineQueryResultArticle::builder()
         .id("1")
         .title(title)
         .description(description)
         .input_message_content(InputMessageContent::Text(content))
-        .build();
-    InlineQueryResult::Article(article)
+        .build()
 }
 
 /// Create a button that sends `/start help` to the bot.
