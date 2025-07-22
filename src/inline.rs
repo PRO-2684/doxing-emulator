@@ -1,6 +1,6 @@
 //! Module for handling inline queries.
 
-use super::dox_impl::{dox, get_user_full, get_full_info};
+use super::dox_impl::{dox, get_full_info, get_user_full};
 use frankenstein::{
     ParseMode,
     client_reqwest::Bot,
@@ -15,7 +15,11 @@ pub async fn handle_inline_query(bot: &Bot, inline: &InlineQuery) -> InlineQuery
     // Reject users that the bot doesn't know
     let doxer = &inline.from;
     let Some(doxer_info) = get_full_info(bot, doxer.id).await else {
-        return create_article(include_str!("./messages/doxer-identification-failed.html"), "ERR_DOXER_IDENTIFICATION_FAILED", "谁在说话？滚木吗？");
+        return create_article(
+            include_str!("./messages/doxer-identification-failed.html"),
+            "ERR_DOXER_IDENTIFICATION_FAILED",
+            "谁在说话？滚木吗？",
+        );
     };
     // Actual doxing
     let query = inline.query.trim();

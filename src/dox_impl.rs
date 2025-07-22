@@ -9,6 +9,7 @@ use frankenstein::{
 };
 use log::{debug, error, warn};
 use std::fmt::Write;
+use tokio::time::Duration;
 
 /// Dox given [`User`] and optional [`ChatFullInfo`].
 pub fn dox(doxee: &User, full_info: Option<&ChatFullInfo>) -> String {
@@ -87,7 +88,7 @@ fn detailed_doxing(full_info: &ChatFullInfo) -> Option<String> {
     key = "u64",
     convert = r#"{ user_id }"#,
     sync_writes = "by_key",
-    option = true,
+    option = true
 )]
 pub async fn get_full_info(bot: &Bot, user_id: u64) -> Option<ChatFullInfo> {
     let chat_id = match i64::try_from(user_id) {
@@ -141,7 +142,7 @@ pub async fn get_user_full(bot: &Bot, identifier: &str) -> Option<(User, Option<
     key = "u64",
     convert = r#"{ user_id }"#,
     sync_writes = "by_key",
-    option = true,
+    option = true
 )]
 async fn get_user_by_id(bot: &Bot, user_id: u64) -> Option<User> {
     let chat_id = match i64::try_from(user_id) {

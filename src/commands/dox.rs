@@ -4,7 +4,10 @@ use super::{
     Command,
     dox_impl::{dox, get_full_info, get_user_full},
 };
-use frankenstein::{client_reqwest::Bot, types::{Message, MessageOrigin}};
+use frankenstein::{
+    client_reqwest::Bot,
+    types::{Message, MessageOrigin},
+};
 
 /// The dox command.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -20,16 +23,14 @@ impl Command for Dox {
         let doxer = match msg.from {
             // Can't determine doxer
             None => {
-                return include_str!("../messages/doxer-identification-failed.html")
-                    .to_string();
+                return include_str!("../messages/doxer-identification-failed.html").to_string();
             }
             Some(doxer) => *doxer,
         };
         let doxer_info = match get_full_info(bot, doxer.id).await {
             // Can't determine doxer's full info
             None => {
-                return include_str!("../messages/doxer-identification-failed.html")
-                    .to_string();
+                return include_str!("../messages/doxer-identification-failed.html").to_string();
             }
             Some(full_info) => full_info,
         };
@@ -52,7 +53,7 @@ impl Command for Dox {
                             return include_str!("../messages/invalid-origin.html").to_string();
                         }
                     },
-                }
+                },
                 // Reply message
                 Some(reply) => match reply.from {
                     None => {
@@ -62,14 +63,15 @@ impl Command for Dox {
                     Some(sender) => {
                         let full_info = get_full_info(bot, sender.id).await;
                         (*sender, full_info)
-                    },
+                    }
                 },
             },
             // Target provided in command
             Some(doxee) => match get_user_full(bot, &doxee).await {
                 Some(user_and_info) => user_and_info,
                 None => {
-                    return include_str!("../messages/doxee-identification-failed.html").to_string();
+                    return include_str!("../messages/doxee-identification-failed.html")
+                        .to_string();
                 }
             },
         };
