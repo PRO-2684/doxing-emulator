@@ -68,13 +68,14 @@ pub async fn run(config: Config) -> Result<()> {
                         UpdateContent::Message(msg) => {
                             // Handling messages
                             let bot = bot.clone();
-                            let parsed = Commands::parse(msg.text.as_ref(), &username);
+                            let username = username.clone();
                             tokio::spawn(async move {
+                                let parsed = Commands::parse(msg.text.as_ref(), &username);
                                 let chat_id = msg.chat.id;
                                 let message_id = msg.message_id;
                                 let reply = match parsed {
                                     // Commands
-                                    Some(command) => Some(command.execute(&bot, *msg).await),
+                                    Some(command) => Some(command.execute(&bot, *msg, &username).await),
                                     // Non-commands, can be forwarded messages or others
                                     None => handle_non_command(&bot, *msg).await,
                                 };

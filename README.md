@@ -8,7 +8,7 @@
 [![Crates.io Total Downloads](https://img.shields.io/crates/d/doxing-emulator?logo=rust)](https://crates.io/crates/doxing-emulator)
 [![docs.rs](https://img.shields.io/docsrs/doxing-emulator?logo=rust)](https://docs.rs/doxing-emulator)
 
-Telegram doxing emulator.
+Telegram doxing emulator. You can find me at [@DoxingEmulatorBot](https://t.me/DoxingEmulatorBot?start=help).
 
 ## 📥 Installation
 

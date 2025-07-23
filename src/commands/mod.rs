@@ -16,7 +16,7 @@ pub trait Command {
     /// Help message.
     const HELP: &'static str;
     /// Execute the command.
-    fn execute(self, bot: &Bot, msg: Message) -> impl Future<Output = String> + Send;
+    fn execute(self, bot: &Bot, msg: Message, username: &str) -> impl Future<Output = String> + Send;
 }
 
 /// Available commands.
@@ -74,11 +74,11 @@ impl Commands {
     }
 
     /// Execute the command.
-    pub async fn execute(self, bot: &Bot, msg: Message) -> String {
+    pub async fn execute(self, bot: &Bot, msg: Message, username: &str) -> String {
         info!("Executing command: {self:?}");
         match self {
-            Self::Help(help) => help.execute(bot, msg).await,
-            Self::Dox(dox) => dox.execute(bot, msg).await,
+            Self::Help(help) => help.execute(bot, msg, username).await,
+            Self::Dox(dox) => dox.execute(bot, msg, username).await,
         }
     }
 }
