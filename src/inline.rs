@@ -28,14 +28,27 @@ pub async fn handle_inline_query(bot: &Bot, inline: &InlineQuery) -> InlineQuery
     if query.is_empty() {
         let report = dox(&doxer, Some(&doxer_info));
         create_article(report, format!("开盒 {}", doxer.first_name), "盒盒盒")
-    } else if let Some((doxee, doxee_info)) = get_user_full(bot, query).await {
-        let report = dox(&doxee, doxee_info.as_ref());
-        create_article(report, format!("开盒 {}", doxee.first_name), "盒盒盒")
+    } else if let Ok(user_id) = query.parse() {
+        // Can be parsed as user_id
+        match get_user_full(bot, user_id).await {
+            Some((doxee, doxee_info)) => {
+                let report = dox(&doxee, doxee_info.as_ref());
+                create_article(report, format!("开盒 {}", doxee.first_name), "盒盒盒")
+            },
+            None => {
+                create_article(
+                    include_str!("./messages/doxee-identification-failed.html"),
+                    "ERR_DOXEE_IDENTIFICATION_FAILED",
+                    "马冬什么？马冬梅。什么冬梅啊？马冬梅啊。马什么梅啊？行，大爷，您先凉快吧。",
+                )
+            }
+        }
     } else {
+        // Not user id
         create_article(
-            include_str!("./messages/doxee-identification-failed.html"),
-            "ERR_DOXEE_IDENTIFICATION_FAILED",
-            "马冬什么？马冬梅。什么冬梅啊？马冬梅啊。马什么梅啊？行，大爷，您先凉快吧。",
+            include_str!("./messages/not-user-id.html"),
+            "ERR_NOT_USER_ID",
+            "发的啥呀这是？",
         )
     }
 }

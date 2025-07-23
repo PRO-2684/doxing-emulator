@@ -67,13 +67,19 @@ impl Command for Dox {
                 },
             },
             // Target provided in command
-            Some(doxee) => match get_user_full(bot, &doxee).await {
-                Some(user_and_info) => user_and_info,
-                None => {
-                    return include_str!("../messages/doxee-identification-failed.html")
-                        .to_string();
+            Some(doxee) => if let Ok(user_id) = doxee.parse() {
+                // Can be parsed as user_id
+                match get_user_full(bot, user_id).await {
+                    Some(user_and_info) => user_and_info,
+                    None => {
+                        return include_str!("../messages/doxee-identification-failed.html")
+                            .to_string();
+                    }
                 }
-            },
+            } else {
+                // Not user id
+                return include_str!("../messages/not-user-id.html").to_string();
+            }
         };
 
         dox(&doxee, doxee_info.as_ref())

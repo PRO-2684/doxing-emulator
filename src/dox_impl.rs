@@ -116,23 +116,10 @@ fn escape(s: &str) -> String {
     // TODO: More effiency by iterating over chars, estimating resulting size and creating new string
 }
 
-/// Try to get [`User`] and its full info from given id ~~or username~~.
-pub async fn get_user_full(bot: &Bot, identifier: &str) -> Option<(User, Option<ChatFullInfo>)> {
-    if !identifier.is_ascii() {
-        None
-    } else if identifier.chars().all(|c| c.is_ascii_digit()) {
-        let user_id: u64 = identifier.parse().ok()?;
-        let user = get_user_by_id(bot, user_id).await;
-        if let Some(user) = user {
-            Some((user, get_full_info(bot, user_id).await))
-        } else {
-            None
-        }
-    } else {
-        // let username = identifier.trim_start_matches('@').to_ascii_lowercase();
-        // get_user_full_by_username(bot, username).await
-        None
-    }
+/// Try to get [`User`] and its full info from given id.
+pub async fn get_user_full(bot: &Bot, user_id: u64) -> Option<(User, Option<ChatFullInfo>)> {
+    let user = get_user_by_id(bot, user_id).await?;
+    Some((user, get_full_info(bot, user_id).await))
 }
 
 /// Try to get [`User`] from given id.
