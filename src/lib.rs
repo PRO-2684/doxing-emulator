@@ -11,12 +11,14 @@ mod dox_impl;
 mod inline;
 mod non_command;
 mod setup;
+mod client_nyquest;
 
 use anyhow::{Result, bail};
+use client_nyquest::Bot;
 pub use commands::{Command, Commands};
 use frankenstein::{
     AsyncTelegramApi, ParseMode,
-    client_reqwest::Bot,
+    // client_reqwest::Bot,
     inline_mode::InlineQueryResult,
     methods::{AnswerInlineQueryParams, GetUpdatesParams, SendMessageParams},
     types::ReplyParameters,

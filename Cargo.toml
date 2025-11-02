@@ -13,17 +13,16 @@ authors = ["PRO-2684"]
 
 [dependencies]
 anyhow = "1.0.100"
+async-trait = "0.1.89"
 cached = { version = "0.56.0", default-features = false, features = ["proc_macro", "async", "async_tokio_rt_multi_thread"] }
+compio = { version = "0.16.0", features = ["macros"] }
 env_logger = "0.11.8" # Logging
-frankenstein = { version = "0.45.0", features = [
-    "client-reqwest",
-] } # Telegram API client
+frankenstein = { version = "0.45.0", features = ["trait-async"] } # Telegram API client
 log = "0.4.28" # Logging
+nyquest = { version = "0.3.1", features = ["multipart", "async", "json"] }
 serde = { version = "1.0.228", features = ["derive"] } # Configuration
-tokio = { version = "1.48.0", features = [
-    "rt-multi-thread",
-    "macros",
-] } # Runtime
+serde_json = "1.0.145"
+thiserror = "2.0.17"
 toml = { version = "0.9.8", optional = true } # Configuration
 
 [[bin]]

@@ -3,13 +3,13 @@
 use cached::proc_macro::cached;
 use frankenstein::{
     AsyncTelegramApi,
-    client_reqwest::Bot,
     methods::{GetChatMemberParams, GetChatParams},
     types::{Birthdate, ChatFullInfo, ChatMember, ChatType, User},
 };
+use super::Bot;
 use log::{error, warn};
 use std::fmt::Write;
-use tokio::time::Duration;
+// use tokio::time::Duration;
 
 /// Dox given [`User`] and optional [`ChatFullInfo`].
 pub fn dox(doxee: &User, full_info: Option<&ChatFullInfo>) -> String {
