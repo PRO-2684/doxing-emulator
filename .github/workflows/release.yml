@@ -4,11 +4,10 @@ name: "tagged-release"
 on:
   push:
     tags:
-    - "v*"
+      - "v*"
 
 env:
   BIN_NAME: doxing-emulator
-
 
 jobs:
   create-release:
@@ -18,16 +17,16 @@ jobs:
       upload_url: ${{ steps.release.outputs.upload_url }}
       release_version: ${{ steps.release.outputs.automatic_releases_tag }}
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 1
-    - name: Create GitHub release
-      id: release
-      uses: marvinpinto/action-automatic-releases@latest
-      with:
-        repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        prerelease: false
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      - name: Create GitHub release
+        id: release
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false
   build-release:
     name: build-release
     needs: create-release
@@ -36,67 +35,67 @@ jobs:
       matrix:
         build: [linux, macos, win-msvc]
         include:
-        - build: linux
-          os: ubuntu-latest
-          rust: stable
-          target: x86_64-unknown-linux-gnu
-        - build: macos
-          os: macos-latest
-          rust: stable
-          target: x86_64-apple-darwin
-        - build: win-msvc
-          os: windows-latest
-          rust: stable
-          target: x86_64-pc-windows-msvc
+          - build: linux
+            os: ubuntu-latest
+            rust: stable
+            target: x86_64-unknown-linux-gnu
+          - build: macos
+            os: macos-latest
+            rust: stable
+            target: x86_64-apple-darwin
+          - build: win-msvc
+            os: windows-latest
+            rust: stable
+            target: x86_64-pc-windows-msvc
     runs-on: ${{ matrix.os }}
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 1
-    - name: Install packages (Ubuntu)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends xz-utils liblz4-tool libssl-dev
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        toolchain: ${{ matrix.rust }}
-        targets: ${{ matrix.target }}
-    # - uses: Swatinem/rust-cache@v2
-    #   with:
-    #     key: ${{ matrix.os }}-${{ matrix.rust }}-${{ matrix.target }}
-    - name: Test
-      run: cargo test --target ${{ matrix.target }}
-    - name: Build release binary
-      run: cargo build --target ${{ matrix.target }} --verbose --release --bin ${{ env.BIN_NAME }} --features=cli
-    - name: Build archive
-      shell: bash
-      run: |
-        outdir="./target/${{ env.TARGET_DIR }}/release"
-        staging="${{ env.BIN_NAME }}-${{ needs.create-release.outputs.release_version }}-${{ matrix.target }}"
-        mkdir -p "$staging"
-        cp {README.md,LICENSE} "$staging/"
-        if [ "${{ matrix.os }}" = "windows-latest" ]; then
-          cp "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}.exe" "$staging/"
-          cd "$staging"
-          7z a "../$staging.zip" .
-          echo "ASSET=$staging.zip" >> $GITHUB_ENV
-        else
-          cp "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}" "$staging/"
-          tar czf "$staging.tar.gz" -C "$staging" .
-          echo "ASSET=$staging.tar.gz" >> $GITHUB_ENV
-        fi
-    - name: Upload release archive
-      uses: actions/upload-release-asset@v1.0.2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ${{ env.ASSET }}
-        asset_name: ${{ env.ASSET }}
-        asset_content_type: application/octet-stream
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      - name: Install packages (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends xz-utils liblz4-tool libssl-dev
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ matrix.rust }}
+          targets: ${{ matrix.target }}
+      # - uses: Swatinem/rust-cache@v2
+      #   with:
+      #     key: ${{ matrix.os }}-${{ matrix.rust }}-${{ matrix.target }}
+      - name: Test
+        run: cargo test --target ${{ matrix.target }}
+      - name: Build release binary
+        run: cargo build --target ${{ matrix.target }} --verbose --release --bin ${{ env.BIN_NAME }} --features=cli
+      - name: Build archive
+        shell: bash
+        run: |
+          outdir="./target/${{ env.TARGET_DIR }}/release"
+          staging="${{ env.BIN_NAME }}-${{ needs.create-release.outputs.release_version }}-${{ matrix.target }}"
+          mkdir -p "$staging"
+          cp {README.md,LICENSE} "$staging/"
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            cp "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}.exe" "$staging/"
+            cd "$staging"
+            7z a "../$staging.zip" .
+            echo "ASSET=$staging.zip" >> $GITHUB_ENV
+          else
+            cp "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}" "$staging/"
+            tar czf "$staging.tar.gz" -C "$staging" .
+            echo "ASSET=$staging.tar.gz" >> $GITHUB_ENV
+          fi
+      - name: Upload release archive
+        uses: actions/upload-release-asset@v1.0.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ${{ env.ASSET }}
+          asset_name: ${{ env.ASSET }}
+          asset_content_type: application/octet-stream
   publish-release:
     # Publish the release to crates.io
     # See [Trusted Publishing](https://crates.io/docs/trusted-publishing)
@@ -105,19 +104,19 @@ jobs:
     permissions:
       id-token: write
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 1
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        toolchain: stable
-    - name: Auth crates.io
-      uses: rust-lang/crates-io-auth-action@v1
-      id: auth
-    - name: Publish to crates.io
-      # Don't know why, but cargo complains that Cargo.lock has been changed.
-      run: cargo publish --allow-dirty
-      env:
-        CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+      - name: Auth crates.io
+        uses: rust-lang/crates-io-auth-action@v1
+        id: auth
+      - name: Publish to crates.io
+        # Don't know why, but cargo complains that Cargo.lock has been changed.
+        run: cargo publish --allow-dirty
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
