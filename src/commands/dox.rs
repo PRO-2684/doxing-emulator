@@ -20,19 +20,13 @@ impl Command for Dox {
     const HELP: &'static str = "盒盒盒";
     async fn execute(self, bot: &Bot, msg: Message, _username: &str) -> String {
         // Reject users that the bot doesn't know
-        let doxer = match msg.from {
+        let Some(doxer) = msg.from else {
             // Can't determine doxer
-            None => {
-                return include_str!("../messages/doxer-identification-failed.html").to_string();
-            }
-            Some(doxer) => *doxer,
+            return include_str!("../messages/doxer-identification-failed.html").to_string();
         };
-        let doxer_info = match get_full_info(bot, doxer.id).await {
+        let Some(doxer_info) = get_full_info(bot, doxer.id).await else {
             // Can't determine doxer's full info
-            None => {
-                return include_str!("../messages/doxer-identification-failed.html").to_string();
-            }
-            Some(full_info) => full_info,
+            return include_str!("../messages/doxer-identification-failed.html").to_string();
         };
         // Determine doxee and full info
         let (doxee, doxee_info) = match self.doxee {
@@ -41,7 +35,7 @@ impl Command for Dox {
                 // Not a reply message - try external reply
                 None => match msg.external_reply {
                     // Not an external reply message - fallback to doxer
-                    None => (doxer, Some(doxer_info)),
+                    None => (*doxer, Some(doxer_info)),
                     // External reply message
                     Some(external) => match external.origin {
                         MessageOrigin::User(user) => {
@@ -55,16 +49,14 @@ impl Command for Dox {
                     },
                 },
                 // Reply message
-                Some(reply) => match reply.from {
-                    None => {
+                Some(reply) => {
+                    let Some(sender) = reply.from else {
                         return include_str!("../messages/doxee-identification-failed.html")
                             .to_string();
-                    }
-                    Some(sender) => {
-                        let full_info = get_full_info(bot, sender.id).await;
-                        (*sender, full_info)
-                    }
-                },
+                    };
+                    let full_info = get_full_info(bot, sender.id).await;
+                    (*sender, full_info)
+                }
             },
             // Target provided in command
             Some(doxee) => {
