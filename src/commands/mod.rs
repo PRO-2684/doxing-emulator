@@ -5,7 +5,7 @@ mod help;
 
 use super::dox_impl;
 pub use dox::Dox;
-use frankenstein::{client_reqwest::Bot, types::Message};
+use frakti::{client_cyper::Bot, types::Message};
 pub use help::Help;
 use log::info;
 
@@ -16,7 +16,12 @@ pub trait Command {
     /// Help message.
     const HELP: &'static str;
     /// Execute the command.
-    fn execute(self, bot: &Bot, msg: Message, username: &str) -> impl Future<Output = String> + Send;
+    fn execute(
+        self,
+        bot: &Bot,
+        msg: Message,
+        username: &str,
+    ) -> impl Future<Output = String> + Send;
 }
 
 /// Available commands.

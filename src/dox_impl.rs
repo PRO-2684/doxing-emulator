@@ -1,15 +1,14 @@
 //! Actual implementation of doxing.
 
 use cached::proc_macro::cached;
-use frankenstein::{
+use frakti::{
     AsyncTelegramApi,
-    client_reqwest::Bot,
+    client_cyper::Bot,
     methods::{GetChatMemberParams, GetChatParams},
     types::{Birthdate, ChatFullInfo, ChatMember, ChatType, User},
 };
 use log::{error, warn};
 use std::fmt::Write;
-use tokio::time::Duration;
 
 /// Dox given [`User`] and optional [`ChatFullInfo`].
 pub fn dox(doxee: &User, full_info: Option<&ChatFullInfo>) -> String {

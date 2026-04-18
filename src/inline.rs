@@ -1,9 +1,9 @@
 //! Module for handling inline queries.
 
 use super::dox_impl::{dox, get_full_info, get_user_full};
-use frankenstein::{
+use frakti::{
     ParseMode,
-    client_reqwest::Bot,
+    client_cyper::Bot,
     inline_mode::{
         InlineQuery, InlineQueryResultArticle, InlineQueryResultsButton, InputMessageContent,
         InputTextMessageContent,
@@ -34,14 +34,12 @@ pub async fn handle_inline_query(bot: &Bot, inline: &InlineQuery) -> InlineQuery
             Some((doxee, doxee_info)) => {
                 let report = dox(&doxee, doxee_info.as_ref());
                 create_article(report, format!("开盒 {}", doxee.first_name), "盒盒盒")
-            },
-            None => {
-                create_article(
-                    include_str!("./messages/doxee-identification-failed.html"),
-                    "ERR_DOXEE_IDENTIFICATION_FAILED",
-                    "马冬什么？马冬梅。什么冬梅啊？马冬梅啊。马什么梅啊？行，大爷，您先凉快吧。",
-                )
             }
+            None => create_article(
+                include_str!("./messages/doxee-identification-failed.html"),
+                "ERR_DOXEE_IDENTIFICATION_FAILED",
+                "马冬什么？马冬梅。什么冬梅啊？马冬梅啊。马什么梅啊？行，大爷，您先凉快吧。",
+            ),
         }
     } else {
         // Not user id

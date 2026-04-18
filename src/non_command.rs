@@ -1,8 +1,8 @@
 //! Module for handling non-command messages.
 
 use super::dox_impl::{dox, get_full_info};
-use frankenstein::{
-    client_reqwest::Bot,
+use frakti::{
+    client_cyper::Bot,
     types::{ChatType, Message, MessageOrigin},
 };
 use log::{debug, info};

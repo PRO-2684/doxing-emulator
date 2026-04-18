@@ -2,9 +2,9 @@
 
 use super::commands::LIST;
 use anyhow::Result;
-use frankenstein::{
+use frakti::{
     AsyncTelegramApi, Error,
-    client_reqwest::Bot,
+    client_cyper::Bot,
     methods::{DeleteMyCommandsParams, SetMyCommandsParams, SetMyDefaultAdministratorRightsParams},
     types::{BotCommand, ChatAdministratorRights},
 };
@@ -60,4 +60,6 @@ const RECOMMENDED_ADMIN_RIGHTS: ChatAdministratorRights = ChatAdministratorRight
     can_edit_stories: None,
     can_delete_stories: None,
     can_manage_topics: None,
+    can_manage_direct_messages: Some(false),
+    can_manage_tags: Some(false),
 };
