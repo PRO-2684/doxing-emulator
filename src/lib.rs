@@ -28,7 +28,7 @@ use serde::Deserialize;
 use setup::{setup_commands, setup_rights};
 
 /// Configuration for the bot.
-#[derive(Deserialize, Clone, PartialEq, Eq)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct Config {
     /// The token for the bot.
     pub token: String,

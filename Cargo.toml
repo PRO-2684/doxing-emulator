@@ -13,7 +13,7 @@ authors = ["PRO-2684"]
 
 [dependencies]
 anyhow = "1.0.102"
-compio = { version = "0.18.0", features = ["macros"] }
+compio = { version = "0.18.0", features = ["macros", "fs"] }
 env_logger = "0.11.10" # Logging
 frakti = { version = "0.1.0", features = [
     "client-cyper",
