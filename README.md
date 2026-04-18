@@ -58,3 +58,8 @@ If the path is not specified, defaults to `config.toml`.
 - Reply a message with `/dox` - doxes the sender of the replied message
 - Forward a message to the bot - doxes the sender of the forwarded message
 - Inline query - doxes the user with provided user id
+
+## ✅ TODO
+
+- Cache for `get_full_info` and `get_user_by_id`.
+- More doxing info (e.g. user tags).
