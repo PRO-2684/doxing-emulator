@@ -1,13 +1,13 @@
 #![warn(clippy::all, clippy::nursery, clippy::pedantic, clippy::cargo)]
 
 use anyhow::Result;
+use compio::fs::read;
 use doxing_emulator::{Config, run};
 use env_logger::Env;
 use std::io::Write;
-use tokio::fs::read_to_string;
-use toml::from_str;
+use toml::from_slice;
 
-#[tokio::main]
+#[compio::main]
 async fn main() -> Result<()> {
     // Logging
     env_logger::Builder::from_env(Env::default().default_filter_or("info"))
@@ -27,8 +27,8 @@ async fn read_config() -> Result<Config> {
     let path = std::env::args()
         .nth(1)
         .unwrap_or_else(|| "config.toml".to_string());
-    let config = read_to_string(path).await?;
-    let config = from_str(&config)?;
+    let config = read(path).await?;
+    let config = from_slice(&config)?;
 
     Ok(config)
 }
