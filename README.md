@@ -61,4 +61,5 @@ If the path is not specified, defaults to `config.toml`.
 
 ## ✅ TODO
 
+- Proxy support.
 - Cache for `get_full_info` and `get_user_by_id`.
