@@ -79,23 +79,23 @@ fn detailed_doxing(full_info: &ChatFullInfo) -> Option<String> {
     Some(detail)
 }
 
+// TODO: Cache
 /// Try to get full info about the user.
 pub async fn get_full_info(bot: &Bot, user_id: u64) -> Option<ChatFullInfo> {
-    let chat_id = match i64::try_from(user_id) {
-        Ok(id) => id,
-        Err(e) => {
-            warn!("[get_full_info] Cannot convert user_id {user_id} to chat_id: {e:?}");
-            return None;
-        }
+    let Ok(chat_id) = i64::try_from(user_id).inspect_err(|e| {
+        warn!("[get_full_info] Cannot convert user_id {user_id} to chat_id: {e:?}")
+    }) else {
+        return None;
     };
     let get_params = GetChatParams::builder().chat_id(chat_id).build();
-    match bot.get_chat(&get_params).await {
-        Err(e) => {
-            warn!("Error querying {user_id}: {e:?}");
-            None
-        }
-        Ok(r) => Some(r.result),
-    }
+    let Ok(result) = bot
+        .get_chat(&get_params)
+        .await
+        .inspect_err(|e| warn!("Error querying {user_id}: {e:?}"))
+    else {
+        return None;
+    };
+    Some(result.result)
 }
 
 /// Escapes the given string, as mentioned by [the docs](https://core.telegram.org/bots/api#html-style) on Telegram.
@@ -103,15 +103,16 @@ fn escape(s: &str) -> String {
     s.replace('&', "&amp;")
         .replace('<', "&lt;")
         .replace('>', "&gt;")
-    // TODO: More effiency by iterating over chars, estimating resulting size and creating new string
 }
 
 /// Try to get [`User`] and its full info from given id.
 pub async fn get_user_full(bot: &Bot, user_id: u64) -> Option<(User, Option<ChatFullInfo>)> {
     let user = get_user_by_id(bot, user_id).await?;
-    Some((user, get_full_info(bot, user_id).await))
+    let full_info = get_full_info(bot, user_id).await;
+    Some((user, full_info))
 }
 
+// TODO: Cache
 /// Try to get [`User`] from given id.
 async fn get_user_by_id(bot: &Bot, user_id: u64) -> Option<User> {
     let chat_id = match i64::try_from(user_id) {
@@ -125,23 +126,22 @@ async fn get_user_by_id(bot: &Bot, user_id: u64) -> Option<User> {
         .chat_id(chat_id)
         .user_id(user_id)
         .build();
-    match bot.get_chat_member(&get_params).await {
-        Ok(result) => {
-            let user = match result.result {
-                ChatMember::Administrator(admin) => admin.user,
-                ChatMember::Creator(creator) => creator.user,
-                ChatMember::Kicked(kicked) => kicked.user,
-                ChatMember::Left(left) => left.user,
-                ChatMember::Member(member) => member.user,
-                ChatMember::Restricted(restricted) => restricted.user,
-            };
-            Some(user)
-        }
-        Err(e) => {
-            warn!("Cannot get user from id {user_id}: {e:?}");
-            None
-        }
-    }
+    let Ok(result) = bot
+        .get_chat_member(&get_params)
+        .await
+        .inspect_err(|e| warn!("Cannot get user from id {user_id}: {e:?}"))
+    else {
+        return None;
+    };
+    let user = match result.result {
+        ChatMember::Administrator(admin) => admin.user,
+        ChatMember::Creator(creator) => creator.user,
+        ChatMember::Kicked(kicked) => kicked.user,
+        ChatMember::Left(left) => left.user,
+        ChatMember::Member(member) => member.user,
+        ChatMember::Restricted(restricted) => restricted.user,
+    };
+    Some(user)
 }
 
 /// **Won't work. Kept for reference only.**
@@ -155,26 +155,21 @@ async fn get_user_full_by_username(
     let get_params = GetChatParams::builder()
         .chat_id(format!("@{username}"))
         .build();
-    let full_info = match bot.get_chat(&get_params).await {
-        Err(e) => {
-            warn!("Error querying @{username}: {e:?}");
-            None
-        }
-        Ok(r) => Some(r.result),
-    }?;
+    let Ok(result) = bot
+        .get_chat(&get_params)
+        .await
+        .inspect_err(|e| warn!("Error querying @{username}: {e:?}"))
+    else {
+        return None;
+    };
+    let full_info = result.result;
     if !matches!(full_info.type_field, ChatType::Private) {
         warn!("Trying to get user full on a non-private chat: @{username}");
         return None;
     }
 
     let chat_id = full_info.id;
-    let user_id = match u64::try_from(chat_id) {
-        Ok(id) => id,
-        Err(e) => {
-            warn!("[get_user_full_by_username] Cannot convert chat_id {chat_id} to user_id: {e:?}");
-            return None;
-        }
-    };
+    let user_id = chat_id.unsigned_abs();
     let Some(user) = get_user_by_id(bot, user_id).await else {
         error!("Cannot get user by id, even we've got chat full info");
         return None;
