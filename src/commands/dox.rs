@@ -2,7 +2,7 @@
 
 use super::{
     Command,
-    dox_impl::{dox, get_full_info, get_user_full},
+    dox_impl::{DoxReport, get_full_info, get_user_report},
 };
 use frakti::{
     client_cyper::Bot,
@@ -28,20 +28,19 @@ impl Command for Dox {
             // Can't determine doxer's full info
             return include_str!("../messages/doxer-identification-failed.html").to_string();
         };
-        // Determine doxee and full info
-        let (doxee, doxee_info) = match self.doxee {
+        // Create a report for the doxee
+        let report = match self.doxee {
             // Target not provided in command
             None => match msg.reply_to_message {
                 // Not a reply message - try external reply
                 None => match msg.external_reply {
                     // Not an external reply message - fallback to doxer
-                    None => (*doxer, Some(doxer_info)),
+                    None => DoxReport::new(*doxer, None, Some(doxer_info)),
                     // External reply message
                     Some(external) => match external.origin {
                         MessageOrigin::User(user) => {
-                            let sender = user.sender_user;
-                            let full_info = get_full_info(bot, sender.id).await;
-                            (sender, full_info)
+                            let full_info = get_full_info(bot, user.sender_user.id).await;
+                            DoxReport::new(user.sender_user, None, full_info)
                         }
                         _ => {
                             return include_str!("../messages/invalid-origin.html").to_string();
@@ -55,15 +54,15 @@ impl Command for Dox {
                             .to_string();
                     };
                     let full_info = get_full_info(bot, sender.id).await;
-                    (*sender, full_info)
+                    DoxReport::new(*sender, None, full_info)
                 }
             },
             // Target provided in command
             Some(doxee) => {
                 if let Ok(user_id) = doxee.parse() {
                     // Can be parsed as user_id
-                    match get_user_full(bot, user_id).await {
-                        Some(user_and_info) => user_and_info,
+                    match get_user_report(bot, user_id).await {
+                        Some(report) => report,
                         None => {
                             return include_str!("../messages/doxee-identification-failed.html")
                                 .to_string();
@@ -76,6 +75,6 @@ impl Command for Dox {
             }
         };
 
-        dox(&doxee, doxee_info.as_ref())
+        report.to_string()
     }
 }

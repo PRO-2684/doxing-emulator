@@ -1,6 +1,6 @@
 //! Module for handling non-command messages.
 
-use super::dox_impl::{dox, get_full_info};
+use super::dox_impl::{DoxReport, get_full_info};
 use frakti::{
     client_cyper::Bot,
     types::{ChatType, Message, MessageOrigin},
@@ -37,7 +37,7 @@ pub async fn handle_non_command(bot: &Bot, msg: Message) -> Option<String> {
                 // ... from a user
                 let doxee = origin_user.sender_user;
                 let full_info = get_full_info(bot, doxee.id).await;
-                dox(&doxee, full_info.as_ref())
+                DoxReport::new(doxee, None, full_info).to_string()
             } else {
                 // ... from something else
                 debug!("Cannot determine the origin as a user: {origin:?}");

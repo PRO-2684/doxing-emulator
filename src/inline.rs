@@ -1,6 +1,6 @@
 //! Module for handling inline queries.
 
-use super::dox_impl::{dox, get_full_info, get_user_full};
+use super::dox_impl::{DoxReport, get_full_info, get_user_report};
 use frakti::{
     ParseMode,
     client_cyper::Bot,
@@ -26,15 +26,20 @@ pub async fn handle_inline_query(bot: &Bot, inline: &InlineQuery) -> InlineQuery
     // Actual doxing
     let query = inline.query.trim();
     if query.is_empty() {
-        let report = dox(&doxer, Some(&doxer_info));
-        create_article(report, format!("开盒 {}", doxer.first_name), "盒盒盒")
+        let report = DoxReport::new(doxer.clone(), None, Some(doxer_info));
+        create_article(
+            report.to_string(),
+            format!("开盒 {}", doxer.first_name),
+            "盒盒盒",
+        )
     } else if let Ok(user_id) = query.parse() {
         // Can be parsed as user_id
-        match get_user_full(bot, user_id).await {
-            Some((doxee, doxee_info)) => {
-                let report = dox(&doxee, doxee_info.as_ref());
-                create_article(report, format!("开盒 {}", doxee.first_name), "盒盒盒")
-            }
+        match get_user_report(bot, user_id).await {
+            Some(report) => create_article(
+                report.to_string(),
+                format!("开盒 {}", report.user.first_name),
+                "盒盒盒",
+            ),
             None => create_article(
                 include_str!("./messages/doxee-identification-failed.html"),
                 "ERR_DOXEE_IDENTIFICATION_FAILED",
