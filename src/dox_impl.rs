@@ -32,10 +32,12 @@ impl DoxReport {
 
 impl fmt::Display for DoxReport {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // TODO: User title/tag
         write!(f, "您好，请问是用户 ID 为 <code>{}</code>", self.user.id)?;
         if let Some(username) = &self.user.username {
             write!(f, "，用户名为 <code>@{username}</code>")?;
+        }
+        if let Some(title) = &self.title {
+            write!(f, "，头衔为 <code>{}</code>", escape(title))?;
         }
         if let Some(full_info) = &self.full_info {
             detailed_doxing(full_info, f)?;
@@ -62,12 +64,21 @@ fn detailed_doxing(full_info: &ChatFullInfo, f: &mut fmt::Formatter<'_>) -> fmt:
         warn!("Trying to dox a non-private chat: {}", full_info.id);
         return Ok(());
     }
-    // TODO: BusinessLocation
     if let Some(birthday) = &full_info.birthdate {
         let Birthdate { year, month, day } = birthday;
         match year {
             None => write!(f, "，生日在 {month:02} 月 {day:02} 日")?,
             Some(year) => write!(f, "，生日在 {year:04} 年 {month:02} 月 {day:02} 日")?,
+        }
+    }
+    if let Some(business_location) = &full_info.business_location {
+        write!(f, "，位于 {}", escape(&business_location.address))?;
+        if let Some(location) = &business_location.location {
+            write!(
+                f,
+                "（经度：{}，纬度：{}）",
+                location.longitude, location.latitude
+            )?;
         }
     }
     if let Some(channel) = &full_info.personal_chat {
