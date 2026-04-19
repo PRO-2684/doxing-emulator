@@ -2,7 +2,7 @@
 
 use super::{
     Command,
-    dox_impl::{DoxReport, get_full_info, get_user_report},
+    dox_impl::{DoxReport, get_full_info, get_user_report, get_user_title_by_id},
 };
 use frakti::{
     client_cyper::Bot,
@@ -35,12 +35,23 @@ impl Command for Dox {
                 // Not a reply message - try external reply
                 None => match msg.external_reply {
                     // Not an external reply message - fallback to doxer
-                    None => DoxReport::new(*doxer, None, Some(doxer_info)),
+                    None => {
+                        let title = get_user_title_by_id(bot, doxer.id, Some(msg.chat.id))
+                            .await
+                            .map(|(_, title)| title)
+                            .flatten();
+                        DoxReport::new(*doxer, title, Some(doxer_info))
+                    }
                     // External reply message
                     Some(external) => match external.origin {
                         MessageOrigin::User(user) => {
+                            let chat_id = external.chat.map(|chat| chat.id);
+                            let title = get_user_title_by_id(bot, user.sender_user.id, chat_id)
+                                .await
+                                .map(|(_, title)| title)
+                                .flatten();
                             let full_info = get_full_info(bot, user.sender_user.id).await;
-                            DoxReport::new(user.sender_user, None, full_info)
+                            DoxReport::new(user.sender_user, title, full_info)
                         }
                         _ => {
                             return include_str!("../messages/invalid-origin.html").to_string();
@@ -53,15 +64,20 @@ impl Command for Dox {
                         return include_str!("../messages/doxee-identification-failed.html")
                             .to_string();
                     };
+                    let chat_id = reply.chat.id;
+                    let title = get_user_title_by_id(bot, sender.id, Some(chat_id))
+                        .await
+                        .map(|(_, title)| title)
+                        .flatten();
                     let full_info = get_full_info(bot, sender.id).await;
-                    DoxReport::new(*sender, None, full_info)
+                    DoxReport::new(*sender, title, full_info)
                 }
             },
             // Target provided in command
             Some(doxee) => {
                 if let Ok(user_id) = doxee.parse() {
                     // Can be parsed as user_id
-                    match get_user_report(bot, user_id).await {
+                    match get_user_report(bot, user_id, Some(msg.chat.id)).await {
                         Some(report) => report,
                         None => {
                             return include_str!("../messages/doxee-identification-failed.html")

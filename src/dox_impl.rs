@@ -20,7 +20,7 @@ pub struct DoxReport {
 }
 
 impl DoxReport {
-    /// Create a new [`DoxInfo`] from given user, title and full info.
+    /// Create a new [`DoxReport`] from given user, title and full info.
     pub fn new(user: User, title: Option<String>, full_info: Option<ChatFullInfo>) -> Self {
         Self {
             user,
@@ -92,9 +92,9 @@ fn detailed_doxing(full_info: &ChatFullInfo, f: &mut fmt::Formatter<'_>) -> fmt:
     Ok(())
 }
 
-/// Try to get a dox report of the user with given id.
-pub async fn get_user_report(bot: &Bot, user_id: u64) -> Option<DoxReport> {
-    let (user, title) = get_user_title_by_id(bot, user_id).await?;
+/// Try to get a dox report of the user with given id and optional chat id.
+pub async fn get_user_report(bot: &Bot, user_id: u64, chat_id: Option<i64>) -> Option<DoxReport> {
+    let (user, title) = get_user_title_by_id(bot, user_id, chat_id).await?;
     let full_info = get_full_info(bot, user_id).await;
     Some(DoxReport {
         user,
@@ -124,24 +124,49 @@ pub async fn get_full_info(bot: &Bot, user_id: u64) -> Option<ChatFullInfo> {
 
 // TODO: Cache
 /// Try to get [`User`] and his title/tag from given id.
-async fn get_user_title_by_id(bot: &Bot, user_id: u64) -> Option<(User, Option<String>)> {
-    let chat_id = match i64::try_from(user_id) {
-        Ok(id) => id,
-        Err(e) => {
-            warn!("[get_user_by_id] Cannot convert user_id {user_id} to chat_id: {e:?}");
-            return None;
-        }
+pub async fn get_user_title_by_id(
+    bot: &Bot,
+    user_id: u64,
+    chat_id: Option<i64>,
+) -> Option<(User, Option<String>)> {
+    /// Try to convert u64 to i64, returning None and logging a warning if it fails.
+    fn try_i64_from_u64(n: u64) -> Option<i64> {
+        i64::try_from(n)
+            .inspect_err(|e| warn!("[get_user_title_by_id] Cannot convert {n} to i64: {e:?}"))
+            .ok()
+    }
+    let chat_id = match chat_id {
+        Some(id) => id,
+        None => try_i64_from_u64(user_id)?,
     };
     let get_params = GetChatMemberParams::builder()
         .chat_id(chat_id)
         .user_id(user_id)
         .build();
-    let Ok(result) = bot
-        .get_chat_member(&get_params)
-        .await
-        .inspect_err(|e| warn!("Cannot get user from id {user_id}: {e:?}"))
-    else {
-        return None;
+    let result = match bot.get_chat_member(&get_params).await {
+        Ok(result) => result,
+        Err(e) => {
+            // Fallback to chat_id = user_id
+            let fallback_chat_id = try_i64_from_u64(user_id)?;
+            if fallback_chat_id == chat_id {
+                warn!(
+                    "Cannot get user with id {user_id} in chat {chat_id}: {e:?}, no fallback available"
+                );
+                return None;
+            }
+            warn!("Cannot get user with id {user_id} in chat {chat_id}: {e:?}, trying fallback...");
+            let fallback_params = GetChatMemberParams::builder()
+                .chat_id(fallback_chat_id)
+                .user_id(user_id)
+                .build();
+            match bot.get_chat_member(&fallback_params).await {
+                Ok(result) => result,
+                Err(e) => {
+                    warn!("Fallback failed for user_id {user_id}: {e:?}");
+                    return None;
+                }
+            }
+        }
     };
     let user_and_title = match result.result {
         ChatMember::Administrator(admin) => (admin.user, admin.custom_title),
