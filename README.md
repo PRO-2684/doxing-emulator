@@ -62,4 +62,3 @@ If the path is not specified, defaults to `config.toml`.
 ## ✅ TODO
 
 - Cache for `get_full_info` and `get_user_by_id`.
-- More doxing info (e.g. user tags).
