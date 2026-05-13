@@ -1,6 +1,6 @@
 [package]
 name = "doxing-emulator"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2024"
 readme = "README.md"
 description = "Doxing emulator"
@@ -43,3 +43,4 @@ disabled-strategies = ["quick-install"]
 
 [package.metadata.binstall.overrides.x86_64-pc-windows-msvc]
 pkg-fmt = "zip"
+

@@ -584,7 +584,7 @@ dependencies = [
 
 [[package]]
 name = "doxing-emulator"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "anyhow",
  "compio",
@@ -713,6 +713,8 @@ dependencies = [
 [[package]]
 name = "frakti"
 version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "863ae761efebcee02bed60a6572e2f15a71ac8c111d76a7a4bb1bcad92c2b9e0"
 dependencies = [
  "bon",
  "compio",
