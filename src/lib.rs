@@ -65,7 +65,7 @@ pub async fn run(config: Config) -> Result<()> {
                 for update in updates.result {
                     trace!("Received update: {update:?}");
                     match update.content {
-                        UpdateContent::Message(msg) => {
+                        UpdateContent::Message(msg) | UpdateContent::GuestMessage(msg) => {
                             // Handling messages
                             let bot = bot.clone();
                             let username = username.clone();
