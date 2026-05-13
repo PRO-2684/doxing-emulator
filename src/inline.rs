@@ -57,7 +57,7 @@ pub async fn handle_inline_query(bot: &Bot, inline: &InlineQuery) -> InlineQuery
 }
 
 /// Create an article with given message, title and description.
-fn create_article(
+pub(crate) fn create_article(
     message: impl Into<String>,
     title: impl Into<String>,
     description: impl Into<String>,

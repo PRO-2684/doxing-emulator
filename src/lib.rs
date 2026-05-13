@@ -8,6 +8,7 @@
 
 mod commands;
 mod dox_impl;
+mod guest;
 mod inline;
 mod non_command;
 mod setup;
@@ -15,7 +16,15 @@ mod setup;
 use anyhow::{Result, bail};
 pub use commands::{Command, Commands};
 use frakti::{
-    AsyncTelegramApi, BASE_API_URL, ParseMode, client_cyper::Bot, cyper::{Client, proxy::Proxy}, inline_mode::InlineQueryResult, methods::{AnswerInlineQueryParams, GetUpdatesParams, SendMessageParams}, types::{Message, ReplyParameters}, updates::UpdateContent
+    AsyncTelegramApi, BASE_API_URL, ParseMode,
+    client_cyper::Bot,
+    cyper::{Client, proxy::Proxy},
+    inline_mode::{InlineQuery, InlineQueryResult},
+    methods::{
+        AnswerGuestQueryParams, AnswerInlineQueryParams, GetUpdatesParams, SendMessageParams,
+    },
+    types::{Message, ReplyParameters},
+    updates::UpdateContent,
 };
 use log::{error, info, trace};
 use non_command::handle_non_command;
@@ -48,10 +57,7 @@ pub async fn run(config: Config) -> Result<()> {
     };
     let client = builder.build();
 
-    let bot = Bot {
-        api_url,
-        client,
-    };
+    let bot = Bot { api_url, client };
 
     setup_commands(&bot).await?;
     setup_rights(&bot).await?;
@@ -76,7 +82,7 @@ pub async fn run(config: Config) -> Result<()> {
                 for update in updates.result {
                     trace!("Received update: {update:?}");
                     match update.content {
-                        UpdateContent::Message(msg) | UpdateContent::GuestMessage(msg) => {
+                        UpdateContent::Message(msg) => {
                             // Handling messages
                             let bot = bot.clone();
                             let username = username.clone();
@@ -85,23 +91,19 @@ pub async fn run(config: Config) -> Result<()> {
                             })
                             .detach();
                         }
+                        UpdateContent::GuestMessage(msg) => {
+                            // Handling guest messages
+                            let bot = bot.clone();
+                            compio::runtime::spawn(async move {
+                                handle_guest(bot, *msg).await;
+                            })
+                            .detach();
+                        }
                         UpdateContent::InlineQuery(inline) => {
                             // Handling inline queries
                             let bot = bot.clone();
                             compio::runtime::spawn(async move {
-                                let article = inline::handle_inline_query(&bot, &inline).await;
-                                info!("Answer: {:?}", article.input_message_content);
-                                let result = InlineQueryResult::Article(article);
-                                let answer_param = AnswerInlineQueryParams::builder()
-                                    .inline_query_id(inline.id)
-                                    .results(vec![result])
-                                    .button(inline::help_button())
-                                    .cache_time(60)
-                                    .build();
-                                _ = bot
-                                    .answer_inline_query(&answer_param)
-                                    .await
-                                    .inspect_err(|e| error!("Failed to answer inline query: {e}"));
+                                handle_inline(bot, inline).await;
                             })
                             .detach();
                         }
@@ -122,16 +124,13 @@ async fn handle_message(bot: Bot, msg: Message, username: String) {
     let message_id = msg.message_id;
     let reply = match parsed {
         // Commands
-        Some(command) => {
-            Some(command.execute(&bot, msg, &username).await)
-        }
+        Some(command) => Some(command.execute(&bot, msg, &username).await),
         // Non-commands, can be forwarded messages or others
         None => handle_non_command(&bot, msg).await,
     };
     if let Some(reply) = reply {
         info!("Reply: {reply}");
-        let reply_param =
-            ReplyParameters::builder().message_id(message_id).build();
+        let reply_param = ReplyParameters::builder().message_id(message_id).build();
         let send_message_param = SendMessageParams::builder()
             .chat_id(chat_id)
             .text(reply)
@@ -143,4 +142,38 @@ async fn handle_message(bot: Bot, msg: Message, username: String) {
             .await
             .inspect_err(|e| error!("Failed to send message: {e}"));
     }
+}
+
+async fn handle_guest(bot: Bot, msg: Message) {
+    let Some(guest_id) = msg.guest_query_id.clone() else {
+        error!("Guest message without guest_query_id: {msg:?}");
+        return;
+    };
+    let article = guest::handle_guest_message(&bot, msg).await;
+    info!("Answer: {:?}", article.input_message_content);
+    let result = InlineQueryResult::Article(article);
+    let answer_param = AnswerGuestQueryParams::builder()
+        .guest_query_id(guest_id)
+        .result(result)
+        .build();
+    _ = bot
+        .answer_guest_query(&answer_param)
+        .await
+        .inspect_err(|e| error!("Failed to answer guest query: {e}"));
+}
+
+async fn handle_inline(bot: Bot, inline: InlineQuery) {
+    let article = inline::handle_inline_query(&bot, &inline).await;
+    info!("Answer: {:?}", article.input_message_content);
+    let result = InlineQueryResult::Article(article);
+    let answer_param = AnswerInlineQueryParams::builder()
+        .inline_query_id(inline.id)
+        .results(vec![result])
+        .button(inline::help_button())
+        .cache_time(60)
+        .build();
+    _ = bot
+        .answer_inline_query(&answer_param)
+        .await
+        .inspect_err(|e| error!("Failed to answer inline query: {e}"));
 }
