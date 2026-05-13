@@ -15,7 +15,7 @@ mod setup;
 use anyhow::{Result, bail};
 pub use commands::{Command, Commands};
 use frakti::{
-    AsyncTelegramApi, BASE_API_URL, ParseMode, client_cyper::Bot, cyper::{Client, proxy::Proxy}, inline_mode::InlineQueryResult, methods::{AnswerInlineQueryParams, GetUpdatesParams, SendMessageParams}, types::ReplyParameters, updates::UpdateContent
+    AsyncTelegramApi, BASE_API_URL, ParseMode, client_cyper::Bot, cyper::{Client, proxy::Proxy}, inline_mode::InlineQueryResult, methods::{AnswerInlineQueryParams, GetUpdatesParams, SendMessageParams}, types::{Message, ReplyParameters}, updates::UpdateContent
 };
 use log::{error, info, trace};
 use non_command::handle_non_command;
@@ -81,32 +81,7 @@ pub async fn run(config: Config) -> Result<()> {
                             let bot = bot.clone();
                             let username = username.clone();
                             compio::runtime::spawn(async move {
-                                let parsed = Commands::parse(msg.text.as_ref(), &username);
-                                let chat_id = msg.chat.id;
-                                let message_id = msg.message_id;
-                                let reply = match parsed {
-                                    // Commands
-                                    Some(command) => {
-                                        Some(command.execute(&bot, *msg, &username).await)
-                                    }
-                                    // Non-commands, can be forwarded messages or others
-                                    None => handle_non_command(&bot, *msg).await,
-                                };
-                                if let Some(reply) = reply {
-                                    info!("Reply: {reply}");
-                                    let reply_param =
-                                        ReplyParameters::builder().message_id(message_id).build();
-                                    let send_message_param = SendMessageParams::builder()
-                                        .chat_id(chat_id)
-                                        .text(reply)
-                                        .reply_parameters(reply_param)
-                                        .parse_mode(ParseMode::Html)
-                                        .build();
-                                    _ = bot
-                                        .send_message(&send_message_param)
-                                        .await
-                                        .inspect_err(|e| error!("Failed to send message: {e}"));
-                                }
+                                handle_message(bot, *msg, username).await;
                             })
                             .detach();
                         }
@@ -138,5 +113,34 @@ pub async fn run(config: Config) -> Result<()> {
                 error!("Error getting updates: {err}");
             }
         }
+    }
+}
+
+async fn handle_message(bot: Bot, msg: Message, username: String) {
+    let parsed = Commands::parse(msg.text.as_ref(), &username);
+    let chat_id = msg.chat.id;
+    let message_id = msg.message_id;
+    let reply = match parsed {
+        // Commands
+        Some(command) => {
+            Some(command.execute(&bot, msg, &username).await)
+        }
+        // Non-commands, can be forwarded messages or others
+        None => handle_non_command(&bot, msg).await,
+    };
+    if let Some(reply) = reply {
+        info!("Reply: {reply}");
+        let reply_param =
+            ReplyParameters::builder().message_id(message_id).build();
+        let send_message_param = SendMessageParams::builder()
+            .chat_id(chat_id)
+            .text(reply)
+            .reply_parameters(reply_param)
+            .parse_mode(ParseMode::Html)
+            .build();
+        _ = bot
+            .send_message(&send_message_param)
+            .await
+            .inspect_err(|e| error!("Failed to send message: {e}"));
     }
 }
