@@ -61,11 +61,10 @@ If the path is not specified, defaults to `config.toml`.
 - Forward a message to the bot - doxes the sender of the forwarded message
 - Inline query - doxes the user with provided user id
 - [Guest interaction](https://telegram.org/blog/ai-bot-revolution-11-new-features#guest-bots)
-    - Mention the bot in the message
+    - Mention the bot in the message (do not select any inline results)
     - If replied to a message, doxes the sender of the replied message
     - Otherwise, doxes the sender of the mentioning message
 
 ## ✅ TODO
 
-- Proxy support.
 - Cache for `get_full_info` and `get_user_by_id`.
