@@ -15,12 +15,7 @@ mod setup;
 use anyhow::{Result, bail};
 pub use commands::{Command, Commands};
 use frakti::{
-    AsyncTelegramApi, ParseMode,
-    client_cyper::Bot,
-    inline_mode::InlineQueryResult,
-    methods::{AnswerInlineQueryParams, GetUpdatesParams, SendMessageParams},
-    types::ReplyParameters,
-    updates::UpdateContent,
+    AsyncTelegramApi, BASE_API_URL, ParseMode, client_cyper::Bot, cyper::{Client, proxy::Proxy}, inline_mode::InlineQueryResult, methods::{AnswerInlineQueryParams, GetUpdatesParams, SendMessageParams}, types::ReplyParameters, updates::UpdateContent
 };
 use log::{error, info, trace};
 use non_command::handle_non_command;
@@ -32,6 +27,9 @@ use setup::{setup_commands, setup_rights};
 pub struct Config {
     /// The token for the bot.
     pub token: String,
+
+    /// Optional proxy URL.
+    pub proxy: Option<String>,
 }
 
 /// Runs the bot.
@@ -41,7 +39,20 @@ pub struct Config {
 /// Errors if setting up or determining username failed.
 pub async fn run(config: Config) -> Result<()> {
     let token = config.token;
-    let bot = Bot::new(&token);
+    let api_url = format!("{BASE_API_URL}{token}");
+
+    let mut builder = Client::builder();
+    if let Some(proxy) = config.proxy {
+        let proxy = Proxy::all(proxy)?;
+        builder = builder.proxy(proxy);
+    };
+    let client = builder.build();
+
+    let bot = Bot {
+        api_url,
+        client,
+    };
+
     setup_commands(&bot).await?;
     setup_rights(&bot).await?;
 

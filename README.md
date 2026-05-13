@@ -36,13 +36,15 @@ cargo install doxing-emulator
 2. Enable [Inline Mode](https://core.telegram.org/bots/inline) and disable [Privacy Mode](https://core.telegram.org/bots/features#privacy-mode).
     - By enabling inline mode, you can dox in any chat via inline queries.
     - By disabling privacy mode, the bot can know who you've replied with a `/dox` command, so it can dox him for you.
-3. Customize name, description etc. as u wish.
+3. Enable [Guest Mode](https://core.telegram.org/bots/features#guest-bots).
+4. Customize name, description etc. as u wish.
 
 ### ⚙️ Configuration
 
 The configuration file is in the format of TOML, with the following key(s):
 
 - `token`: The token for the bot.
+- `proxy`: Optional proxy URL. Uses [cyper::proxy::Proxy](https://docs.rs/cyper/0.9.0-rc.2/cyper/proxy/struct.Proxy.html).
 
 ### ▶️ Running
 
