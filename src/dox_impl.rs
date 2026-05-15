@@ -34,14 +34,14 @@ pub struct DoxReport {
 impl DoxReport {
     /// Create a new [`DoxReport`] from given given user, title and full info.
     pub fn new(user: User, title: Option<String>, full_info: Option<ChatFullInfo>) -> Self {
-        let mut info = Self::from_user(user);
-        if let Some(title) = title {
-            info = info.with_title(Some(title));
+        let mut report = Self::from_user(user);
+        if title.is_some() {
+            report = report.with_title(title);
         }
         if let Some(full_info) = full_info {
-            info = info.with_full_info(full_info);
+            report = report.with_full_info(full_info);
         }
-        info
+        report
     }
 
     /// Create a new [`DoxReport`] from given [`User`].
@@ -86,7 +86,7 @@ impl DoxReport {
             personal_chat: full_info.personal_chat.map(|c| *c),
         }
     }
-    /// Try to create a new [`DoxReport`] from given user id and optional chat id, returning None if it fails.
+    /// Try to create a new completed [`DoxReport`] from given user id and optional chat id, returning None if it fails.
     pub async fn from_id(bot: &Bot, user_id: u64, chat_id: Option<i64>) -> Option<Self> {
         let (user, title) = get_user_title_by_id(bot, user_id, chat_id).await?;
         let full_info = get_full_info(bot, user_id).await;
@@ -99,7 +99,7 @@ impl DoxReport {
         self
     }
     /// Update the [`DoxReport`] with given [`ChatFullInfo`], keeping existing fields if the new info doesn't have them.
-    pub fn with_full_info(mut self, full_info: ChatFullInfo) -> Self {
+    fn with_full_info(mut self, full_info: ChatFullInfo) -> Self {
         if self.username.is_none() {
             self.username = full_info.username;
         }
@@ -117,6 +117,27 @@ impl DoxReport {
         }
         if self.personal_chat.is_none() {
             self.personal_chat = full_info.personal_chat.map(|c| *c);
+        }
+        self
+    }
+    /// Complete the title of the report.
+    pub async fn complete_title(mut self, bot: &Bot, chat_id: Option<i64>) -> Self {
+        if self.title.is_none() {
+            if let Some((_, title)) = get_user_title_by_id(bot, self.id, chat_id).await {
+                self.title = title;
+            }
+        }
+        self
+    }
+    /// Complete the full info of the report.
+    pub async fn complete_full_info(mut self, bot: &Bot) -> Self {
+        if self.birthdate.is_none()
+            || self.business_location.is_none()
+            || self.personal_chat.is_none()
+        {
+            if let Some(full_info) = get_full_info(bot, self.id).await {
+                self = self.with_full_info(full_info);
+            }
         }
         self
     }

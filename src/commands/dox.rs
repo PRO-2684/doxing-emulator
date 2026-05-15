@@ -20,14 +20,17 @@ impl Command for Dox {
     const HELP: &'static str = "盒盒盒";
     async fn execute(self, bot: &Bot, msg: Message, _username: &str) -> String {
         // Reject users that the bot doesn't know
-        let Some(doxer) = msg.from else {
+        let mut doxer_report = if let Some(chat) = msg.sender_chat {
+            // Chat (e.g. channel or group)
+            DoxReport::from_chat(*chat)
+        } else if let Some(user) = msg.from {
+            // Regular user
+            DoxReport::from_user(*user)
+        } else {
             // Can't determine doxer
             return include_str!("../messages/doxer-identification-failed.html").to_string();
         };
-        let Some(doxer_info) = get_full_info(bot, doxer.id).await else {
-            // Can't determine doxer's full info
-            return include_str!("../messages/doxer-identification-failed.html").to_string();
-        };
+        doxer_report.title = msg.sender_tag;
         // Create a report for the doxee
         let report = match self.doxee {
             // Target not provided in command
@@ -35,20 +38,17 @@ impl Command for Dox {
                 // Not a reply message - try external reply
                 None => match msg.external_reply {
                     // Not an external reply message - fallback to doxer
-                    None => DoxReport::new(*doxer, msg.sender_tag, Some(doxer_info)),
+                    None => doxer_report.complete_full_info(bot).await,
                     // External reply message
                     Some(external) => match external.origin {
                         MessageOrigin::User(user) => {
                             let chat_id = external.chat.map(|chat| chat.id);
-                            let Some(report) =
-                                DoxReport::from_id(bot, user.sender_user.id, chat_id).await
-                            else {
-                                return include_str!(
-                                    "../messages/doxee-identification-failed.html"
-                                )
-                                .to_string();
-                            };
-                            report
+                            let doxee_report = DoxReport::from_user(user.sender_user);
+                            doxee_report
+                                .complete_title(bot, chat_id)
+                                .await
+                                .complete_full_info(bot)
+                                .await
                         }
                         _ => {
                             return include_str!("../messages/invalid-origin.html").to_string();
@@ -57,12 +57,21 @@ impl Command for Dox {
                 },
                 // Reply message
                 Some(reply) => {
-                    let Some(sender) = reply.from else {
+                    let doxee_report = if let Some(chat) = reply.sender_chat {
+                        // Chat (e.g. channel or group)
+                        DoxReport::from_chat(*chat)
+                    } else if let Some(user) = reply.from {
+                        // Regular user
+                        DoxReport::from_user(*user)
+                    } else {
+                        // Can't determine doxee
                         return include_str!("../messages/doxee-identification-failed.html")
                             .to_string();
                     };
-                    let full_info = get_full_info(bot, sender.id).await;
-                    DoxReport::new(*sender, reply.sender_tag, full_info)
+                    doxee_report
+                        .with_title(reply.sender_tag)
+                        .complete_full_info(bot)
+                        .await
                 }
             },
             // Target provided in command
