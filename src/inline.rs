@@ -1,6 +1,6 @@
 //! Module for handling inline queries.
 
-use super::dox_impl::{DoxReport, get_full_info};
+use super::dox_impl::DoxReport;
 use frakti::{
     ParseMode,
     client_cyper::Bot,
@@ -12,24 +12,17 @@ use frakti::{
 use log::info;
 
 /// Handle inline queries.
-pub async fn handle_inline_query(bot: &Bot, inline: &InlineQuery) -> InlineQueryResultArticle {
+pub async fn handle_inline_query(bot: &Bot, inline: InlineQuery) -> InlineQueryResultArticle {
     info!("Handling inline query: {}", inline.query);
     // Reject users that the bot doesn't know
-    let doxer = &inline.from;
-    let Some(doxer_info) = get_full_info(bot, doxer.id).await else {
-        return create_article(
-            include_str!("./messages/doxer-identification-failed.html"),
-            "ERR_DOXER_IDENTIFICATION_FAILED",
-            "谁在说话？滚木吗？",
-        );
-    };
+    let mut doxer_report = DoxReport::from_user(inline.from);
     // Actual doxing
     let query = inline.query.trim();
     if query.is_empty() {
-        let report = DoxReport::new(doxer.clone(), None, Some(doxer_info));
+        doxer_report = doxer_report.complete_full_info(bot).await;
         create_article(
-            report.to_string(),
-            format!("开盒 {}", doxer.first_name),
+            doxer_report.to_string(),
+            format!("开盒 {}", doxer_report.first_name.unwrap_or_default()),
             "盒盒盒",
         )
     } else if let Ok(user_id) = query.parse() {

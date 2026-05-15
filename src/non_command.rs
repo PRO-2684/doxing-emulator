@@ -1,6 +1,6 @@
 //! Module for handling non-command messages.
 
-use super::dox_impl::{DoxReport, get_full_info};
+use super::dox_impl::DoxReport;
 use frakti::{
     client_cyper::Bot,
     types::{ChatType, Message, MessageOrigin},
@@ -14,34 +14,33 @@ pub async fn handle_non_command(bot: &Bot, msg: Message) -> Option<String> {
         info!("Handling non-command message in PM: {msg:?}");
         let reply = if let Some(origin) = msg.forward_origin {
             // The message is forwarded
-            // Reject users that the bot doesn't know
-            let doxer = match &msg.from {
+            if msg.from.is_none() && msg.sender_chat.is_none() {
                 // Can't determine doxer
-                None => {
-                    return Some(
-                        include_str!("./messages/doxer-identification-failed.html").to_string(),
-                    );
-                }
-                Some(doxer) => doxer,
+                return Some(
+                    include_str!("./messages/doxer-identification-failed.html").to_string(),
+                );
             };
-            let _doxer_info = match get_full_info(bot, doxer.id).await {
-                // Can't determine doxer's full info
-                None => {
-                    return Some(
-                        include_str!("./messages/doxer-identification-failed.html").to_string(),
-                    );
+            match *origin {
+                MessageOrigin::User(origin_user) => {
+                    // ... from a user
+                    DoxReport::from_user(origin_user.sender_user)
+                        .complete_full_info(bot)
+                        .await
+                        .to_string()
                 }
-                Some(full_info) => full_info,
-            };
-            if let MessageOrigin::User(origin_user) = *origin {
-                // ... from a user
-                let doxee = origin_user.sender_user;
-                let full_info = get_full_info(bot, doxee.id).await;
-                DoxReport::new(doxee, None, full_info).to_string()
-            } else {
-                // ... from something else
-                debug!("Cannot determine the origin as a user: {origin:?}");
-                include_str!("messages/invalid-origin.html").to_string()
+                MessageOrigin::Channel(origin_channel) => {
+                    // ... from a channel
+                    DoxReport::from_chat(origin_channel.chat).to_string()
+                }
+                MessageOrigin::Chat(origin_chat) => {
+                    // ... from a chat
+                    DoxReport::from_chat(origin_chat.sender_chat).to_string()
+                }
+                _ => {
+                    // ... from something else
+                    debug!("Cannot determine the origin as a user: {origin:?}");
+                    include_str!("messages/invalid-origin.html").to_string()
+                }
             }
         } else {
             // Not forwarded message - incomprehensible

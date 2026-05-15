@@ -164,11 +164,12 @@ async fn handle_guest(bot: Bot, msg: Message) {
 }
 
 async fn handle_inline(bot: Bot, inline: InlineQuery) {
-    let article = inline::handle_inline_query(&bot, &inline).await;
+    let inline_id = inline.id.clone();
+    let article = inline::handle_inline_query(&bot, inline).await;
     info!("Answer: {:?}", article.input_message_content);
     let result = InlineQueryResult::Article(article);
     let answer_param = AnswerInlineQueryParams::builder()
-        .inline_query_id(inline.id)
+        .inline_query_id(inline_id)
         .results(vec![result])
         .button(inline::help_button())
         .cache_time(60)

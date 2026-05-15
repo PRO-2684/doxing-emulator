@@ -198,7 +198,7 @@ impl fmt::Display for DoxReport {
 
 // TODO: Cache
 /// Try to get full info about the user.
-pub async fn get_full_info(bot: &Bot, user_id: u64) -> Option<ChatFullInfo> {
+async fn get_full_info(bot: &Bot, user_id: u64) -> Option<ChatFullInfo> {
     let Ok(chat_id) = i64::try_from(user_id).inspect_err(|e| {
         warn!("[get_full_info] Cannot convert user_id {user_id} to chat_id: {e:?}")
     }) else {
@@ -217,7 +217,7 @@ pub async fn get_full_info(bot: &Bot, user_id: u64) -> Option<ChatFullInfo> {
 
 // TODO: Cache
 /// Try to get [`User`] and his title/tag from given id.
-pub async fn get_user_title_by_id(
+async fn get_user_title_by_id(
     bot: &Bot,
     user_id: u64,
     chat_id: Option<i64>,

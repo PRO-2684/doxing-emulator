@@ -1,9 +1,6 @@
 //! The dox command.
 
-use super::{
-    Command,
-    dox_impl::{DoxReport, get_full_info},
-};
+use super::{Command, dox_impl::DoxReport};
 use frakti::{
     client_cyper::Bot,
     types::{Message, MessageOrigin},

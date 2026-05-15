@@ -12,7 +12,7 @@
 ● <b><u>ERR_DOXEE_IDENTIFICATION_FAILED</u></b>: 无法确定被开盒者的身份。如果是回复的消息，可能对方是匿名状态；如果提供了参数，可能用户不存在，或者 bot “不认识”此用户。
 ● <b><u>ERR_DOXER_IDENTIFICATION_FAILED</u></b>: 无法确定指令发送者的身份。您可以向 bot 发送 <a href="tg://resolve?domain={username}&start=help">/start</a> 指令后等待 60s 再次尝试。
 ● <b><u>ERR_INCOMPREHENSIBLE</u></b>: 无法理解的消息。消息既不是转发或引用的，也不是指令。
-● <b><u>ERR_INVALID_ORIGIN</u></b>: 转发或引用来源不是用户，或者被隐藏。
+● <b><u>ERR_INVALID_ORIGIN</u></b>: 转发或引用来源被隐藏。
 ● <b><u>ERR_NOT_USER_ID</u></b>: 提供的参数不是用户 ID。正确的用户 ID 应当由一串阿拉伯数字构成，并且是合法的 u64。
 </blockquote><b>== 让 bot 认识某用户 ==</b><blockquote expandable>
 Telegram 出于隐私考虑，只允许 bot 获取与它互动过的用户的信息。为了让 bot 认识某用户，您可以：
