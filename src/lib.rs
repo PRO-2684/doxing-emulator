@@ -15,6 +15,7 @@ mod setup;
 
 use anyhow::{Result, bail};
 pub use commands::{Command, Commands};
+pub use dox_impl::DoxReport;
 use frakti::{
     AsyncTelegramApi, BASE_API_URL, ParseMode,
     client_cyper::Bot,

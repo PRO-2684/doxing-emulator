@@ -28,6 +28,17 @@ impl DoxReport {
             full_info,
         }
     }
+
+    /// Try to get a dox report of the user with given id and optional chat id.
+    pub async fn from_id(bot: &Bot, user_id: u64, chat_id: Option<i64>) -> Option<Self> {
+        let (user, title) = get_user_title_by_id(bot, user_id, chat_id).await?;
+        let full_info = get_full_info(bot, user_id).await;
+        Some(DoxReport {
+            user,
+            title,
+            full_info,
+        })
+    }
 }
 
 impl fmt::Display for DoxReport {
@@ -90,17 +101,6 @@ fn detailed_doxing(full_info: &ChatFullInfo, f: &mut fmt::Formatter<'_>) -> fmt:
     }
 
     Ok(())
-}
-
-/// Try to get a dox report of the user with given id and optional chat id.
-pub async fn get_user_report(bot: &Bot, user_id: u64, chat_id: Option<i64>) -> Option<DoxReport> {
-    let (user, title) = get_user_title_by_id(bot, user_id, chat_id).await?;
-    let full_info = get_full_info(bot, user_id).await;
-    Some(DoxReport {
-        user,
-        title,
-        full_info,
-    })
 }
 
 // TODO: Cache

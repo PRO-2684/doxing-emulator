@@ -1,6 +1,6 @@
 //! Module for handling inline queries.
 
-use super::dox_impl::{DoxReport, get_full_info, get_user_report};
+use super::dox_impl::{DoxReport, get_full_info};
 use frakti::{
     ParseMode,
     client_cyper::Bot,
@@ -34,7 +34,7 @@ pub async fn handle_inline_query(bot: &Bot, inline: &InlineQuery) -> InlineQuery
         )
     } else if let Ok(user_id) = query.parse() {
         // Can be parsed as user_id
-        match get_user_report(bot, user_id, None).await {
+        match DoxReport::from_id(bot, user_id, None).await {
             Some(report) => create_article(
                 report.to_string(),
                 format!("开盒 {}", report.user.first_name),

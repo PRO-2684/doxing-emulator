@@ -2,7 +2,7 @@
 
 use super::{
     Command,
-    dox_impl::{DoxReport, get_full_info, get_user_report, get_user_title_by_id},
+    dox_impl::{DoxReport, get_full_info, get_user_title_by_id},
 };
 use frakti::{
     client_cyper::Bot,
@@ -66,7 +66,7 @@ impl Command for Dox {
             Some(doxee) => {
                 if let Ok(user_id) = doxee.parse() {
                     // Can be parsed as user_id
-                    match get_user_report(bot, user_id, Some(msg.chat.id)).await {
+                    match DoxReport::from_id(bot, user_id, Some(msg.chat.id)).await {
                         Some(report) => report,
                         None => {
                             return include_str!("../messages/doxee-identification-failed.html")
