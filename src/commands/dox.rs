@@ -2,7 +2,7 @@
 
 use super::{
     Command,
-    dox_impl::{DoxReport, get_full_info, get_user_title_by_id},
+    dox_impl::{DoxReport, get_full_info},
 };
 use frakti::{
     client_cyper::Bot,
@@ -40,12 +40,15 @@ impl Command for Dox {
                     Some(external) => match external.origin {
                         MessageOrigin::User(user) => {
                             let chat_id = external.chat.map(|chat| chat.id);
-                            let title = get_user_title_by_id(bot, user.sender_user.id, chat_id)
-                                .await
-                                .map(|(_, title)| title)
-                                .flatten();
-                            let full_info = get_full_info(bot, user.sender_user.id).await;
-                            DoxReport::new(user.sender_user, title, full_info)
+                            let Some(report) =
+                                DoxReport::from_id(bot, user.sender_user.id, chat_id).await
+                            else {
+                                return include_str!(
+                                    "../messages/doxee-identification-failed.html"
+                                )
+                                .to_string();
+                            };
+                            report
                         }
                         _ => {
                             return include_str!("../messages/invalid-origin.html").to_string();

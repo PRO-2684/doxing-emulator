@@ -37,7 +37,14 @@ pub async fn handle_inline_query(bot: &Bot, inline: &InlineQuery) -> InlineQuery
         match DoxReport::from_id(bot, user_id, None).await {
             Some(report) => create_article(
                 report.to_string(),
-                format!("开盒 {}", report.user.first_name),
+                format!(
+                    "开盒 {}",
+                    report
+                        .first_name
+                        .or(report.last_name)
+                        .or(report.username)
+                        .unwrap_or_else(|| report.id.to_string())
+                ),
                 "盒盒盒",
             ),
             None => create_article(
