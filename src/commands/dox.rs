@@ -35,13 +35,7 @@ impl Command for Dox {
                 // Not a reply message - try external reply
                 None => match msg.external_reply {
                     // Not an external reply message - fallback to doxer
-                    None => {
-                        let title = get_user_title_by_id(bot, doxer.id, Some(msg.chat.id))
-                            .await
-                            .map(|(_, title)| title)
-                            .flatten();
-                        DoxReport::new(*doxer, title, Some(doxer_info))
-                    }
+                    None => DoxReport::new(*doxer, msg.sender_tag, Some(doxer_info)),
                     // External reply message
                     Some(external) => match external.origin {
                         MessageOrigin::User(user) => {
@@ -64,13 +58,8 @@ impl Command for Dox {
                         return include_str!("../messages/doxee-identification-failed.html")
                             .to_string();
                     };
-                    let chat_id = reply.chat.id;
-                    let title = get_user_title_by_id(bot, sender.id, Some(chat_id))
-                        .await
-                        .map(|(_, title)| title)
-                        .flatten();
                     let full_info = get_full_info(bot, sender.id).await;
-                    DoxReport::new(*sender, title, full_info)
+                    DoxReport::new(*sender, reply.sender_tag, full_info)
                 }
             },
             // Target provided in command
