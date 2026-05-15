@@ -11,8 +11,10 @@ use std::fmt;
 
 /// A report containing all available information about a user.
 pub struct DoxReport {
-    /// The user's ID.
+    /// The user's ID as u64.
     pub id: u64,
+    /// The chat ID as i64.
+    pub chat_id: i64,
     /// The user's username, if any.
     pub username: Option<String>,
     /// The user's title/tag in the chat, if any.
@@ -48,6 +50,10 @@ impl DoxReport {
     pub fn from_user(user: User) -> Self {
         Self {
             id: user.id,
+            chat_id: user.id.try_into().unwrap_or_else(|e| {
+                warn!("Cannot convert user id {} to chat id: {e:?}", user.id);
+                0
+            }),
             username: user.username,
             title: None,
             first_name: Some(user.first_name),
@@ -61,11 +67,15 @@ impl DoxReport {
     /// Create a new [`DoxReport`] from given [`Chat`].
     pub fn from_chat(chat: Chat) -> Self {
         Self {
-            id: chat.id as u64,
+            id: chat.id.try_into().unwrap_or_else(|e| {
+                warn!("Cannot convert chat id {} to user id: {e:?}", chat.id);
+                0
+            }),
+            chat_id: chat.id,
             username: chat.username,
             title: chat.title,
-            first_name: chat.first_name,
-            last_name: chat.last_name,
+            first_name: None,
+            last_name: None,
             is_premium: None,
             birthdate: None,
             business_location: None,
@@ -75,7 +85,11 @@ impl DoxReport {
     /// Create a new [`DoxReport`] from given [`ChatFullInfo`].
     pub fn from_full_info(full_info: ChatFullInfo) -> Self {
         Self {
-            id: full_info.id as u64,
+            id: full_info.id.try_into().unwrap_or_else(|e| {
+                warn!("Cannot convert chat id {} to user id: {e:?}", full_info.id);
+                0
+            }),
+            chat_id: full_info.id,
             username: full_info.username,
             title: None,
             first_name: full_info.first_name,
@@ -89,8 +103,9 @@ impl DoxReport {
     /// Try to create a new completed [`DoxReport`] from given user id and optional chat id, returning None if it fails.
     pub async fn from_id(bot: &Bot, user_id: u64, chat_id: Option<i64>) -> Option<Self> {
         let (user, title) = get_user_title_by_id(bot, user_id, chat_id).await?;
-        let full_info = get_full_info(bot, user_id).await;
-        Some(Self::new(user, title, full_info))
+        let report = Self::new(user, title, None);
+        let report = report.complete_full_info(bot).await;
+        Some(report)
     }
 
     /// Add title/tag to the [`DoxReport`].
@@ -135,7 +150,7 @@ impl DoxReport {
             || self.business_location.is_none()
             || self.personal_chat.is_none()
         {
-            if let Some(full_info) = get_full_info(bot, self.id).await {
+            if let Some(full_info) = get_full_info(bot, self.chat_id).await {
                 self = self.with_full_info(full_info);
             }
         }
@@ -198,17 +213,12 @@ impl fmt::Display for DoxReport {
 
 // TODO: Cache
 /// Try to get full info about the user.
-async fn get_full_info(bot: &Bot, user_id: u64) -> Option<ChatFullInfo> {
-    let Ok(chat_id) = i64::try_from(user_id).inspect_err(|e| {
-        warn!("[get_full_info] Cannot convert user_id {user_id} to chat_id: {e:?}")
-    }) else {
-        return None;
-    };
+async fn get_full_info(bot: &Bot, chat_id: i64) -> Option<ChatFullInfo> {
     let get_params = GetChatParams::builder().chat_id(chat_id).build();
     let Ok(result) = bot
         .get_chat(&get_params)
         .await
-        .inspect_err(|e| warn!("Error querying {user_id}: {e:?}"))
+        .inspect_err(|e| warn!("Error querying {chat_id}: {e:?}"))
     else {
         return None;
     };
