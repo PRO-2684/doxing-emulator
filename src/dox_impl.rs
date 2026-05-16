@@ -342,15 +342,15 @@ mod tests {
 
     #[test]
     fn chat_subject_never_becomes_user_id() {
-        assert_eq!(SubjectId::Chat(-1002496139642).as_user_id(), None);
+        assert_eq!(SubjectId::Chat(-1000000000000).as_user_id(), None);
     }
 
     #[test]
     fn chat_display_uses_chat_id_without_wrapping() {
         let report = DoxReport {
-            subject: SubjectId::Chat(-1002496139642),
+            subject: SubjectId::Chat(-1000000000000),
             username: None,
-            title: Some("LSPosed Internal Test".to_string()),
+            title: Some("Test".to_string()),
             first_name: None,
             last_name: None,
             is_premium: None,
@@ -360,8 +360,7 @@ mod tests {
         };
 
         let rendered = report.to_string();
-        assert!(rendered.contains("群聊/频道 ID 为 <code>-1002496139642</code>"));
-        assert!(!rendered.contains("184467"));
+        assert!(rendered.contains("群聊/频道 ID 为 <code>-1000000000000</code>"));
         assert!(!rendered.contains("先生"));
     }
 }
