@@ -226,7 +226,7 @@ impl fmt::Display for DoxReport {
                     write!(f, " {}", escape(last_name))?;
                 }
                 write!(f, "</code> ")?;
-                if fish_cake(&self.first_name) || fish_cake(&self.last_name) {
+                if fish_cake(self.first_name.as_ref()) || fish_cake(self.last_name.as_ref()) {
                     write!(f, "南梁")?;
                 } else if self.is_premium == Some(true) {
                     write!(f, "富哥")?;
@@ -320,9 +320,8 @@ async fn get_user_title_by_id(
 }
 
 /// Whether the given string contains "🍥" or "🏳️‍⚧️".
-fn fish_cake(s: &Option<String>) -> bool {
-    s.as_ref()
-        .is_some_and(|s| s.find('🍥').is_some() || s.contains("🏳️‍⚧️"))
+fn fish_cake(s: Option<&String>) -> bool {
+    s.is_some_and(|s| s.contains('🍥') || s.contains("🏳️‍⚧️"))
 }
 
 /// Escapes the given string, as mentioned by [the docs](https://core.telegram.org/bots/api#html-style) on Telegram.
@@ -343,13 +342,13 @@ mod tests {
 
     #[test]
     fn chat_subject_never_becomes_user_id() {
-        assert_eq!(SubjectId::Chat(-1000000000000).as_user_id(), None);
+        assert_eq!(SubjectId::Chat(-1_000_000_000_000).as_user_id(), None);
     }
 
     #[test]
     fn chat_display_uses_chat_id_without_wrapping() {
         let report = DoxReport {
-            subject: SubjectId::Chat(-1000000000000),
+            subject: SubjectId::Chat(-1_000_000_000_000),
             username: None,
             title: Some("Test".to_string()),
             first_name: None,

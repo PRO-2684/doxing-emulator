@@ -88,26 +88,18 @@ pub async fn run(config: Config) -> Result<()> {
                             // Handling messages
                             let bot = bot.clone();
                             let username = username.clone();
-                            compio::runtime::spawn(async move {
-                                handle_message(bot, *msg, username).await;
-                            })
-                            .detach();
+                            compio::runtime::spawn(Box::pin(handle_message(bot, *msg, username)))
+                                .detach();
                         }
                         UpdateContent::GuestMessage(msg) => {
                             // Handling guest messages
                             let bot = bot.clone();
-                            compio::runtime::spawn(async move {
-                                handle_guest(bot, *msg).await;
-                            })
-                            .detach();
+                            compio::runtime::spawn(Box::pin(handle_guest(bot, *msg))).detach();
                         }
                         UpdateContent::InlineQuery(inline) => {
                             // Handling inline queries
                             let bot = bot.clone();
-                            compio::runtime::spawn(async move {
-                                handle_inline(bot, inline).await;
-                            })
-                            .detach();
+                            compio::runtime::spawn(Box::pin(handle_inline(bot, inline))).detach();
                         }
                         _ => {}
                     }
@@ -126,7 +118,7 @@ async fn handle_message(bot: Bot, msg: Message, username: String) {
     let message_id = msg.message_id;
     let reply = match parsed {
         // Commands
-        Some(command) => Some(command.execute(&bot, msg, &username).await),
+        Some(command) => Some(Box::pin(command.execute(&bot, msg, &username)).await),
         // Non-commands, can be forwarded messages or others
         None => handle_non_command(&bot, msg).await,
     };
@@ -151,7 +143,7 @@ async fn handle_guest(bot: Bot, msg: Message) {
         error!("Guest message without guest_query_id: {msg:?}");
         return;
     };
-    let article = guest::handle_guest_message(&bot, msg).await;
+    let article = Box::pin(guest::handle_guest_message(&bot, msg)).await;
     info!("Answer: {:?}", article.input_message_content);
     let result = InlineQueryResult::Article(article);
     let answer_param = AnswerGuestQueryParams::builder()
