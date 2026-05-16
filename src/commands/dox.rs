@@ -60,6 +60,7 @@ impl Command for Dox {
                     },
                     // Reply message
                     Some(reply) => {
+                        // TODO: Check `forward_origin` and `external_reply`
                         let doxee_report = if let Some(chat) = reply.sender_chat {
                             // Chat (e.g. channel or group)
                             DoxReport::from_chat(*chat)
