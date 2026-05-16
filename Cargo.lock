@@ -725,9 +725,9 @@ dependencies = [
 
 [[package]]
 name = "frakti"
-version = "0.1.1"
+version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "863ae761efebcee02bed60a6572e2f15a71ac8c111d76a7a4bb1bcad92c2b9e0"
+checksum = "2d2f6045b9a00c3a4cad1618d69ada7899f9208f90075d96d2de4e92be22e661"
 dependencies = [
  "bon",
  "compio",
