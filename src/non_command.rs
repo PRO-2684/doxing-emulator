@@ -30,11 +30,15 @@ pub async fn handle_non_command(bot: &Bot, msg: Message) -> Option<String> {
                 }
                 MessageOrigin::Channel(origin_channel) => {
                     // ... from a channel
-                    DoxReport::from_chat(origin_channel.chat).to_string()
+                    DoxReport::from_chat(origin_channel.chat)
+                        .with_title(origin_channel.author_signature)
+                        .to_string()
                 }
                 MessageOrigin::Chat(origin_chat) => {
                     // ... from a chat
-                    DoxReport::from_chat(origin_chat.sender_chat).to_string()
+                    DoxReport::from_chat(origin_chat.sender_chat)
+                        .with_title(origin_chat.author_signature)
+                        .to_string()
                 }
                 _ => {
                     // ... from something else

@@ -92,8 +92,8 @@ impl DoxReport {
         Self {
             subject: SubjectId::Chat(chat.id),
             username: chat.username,
-            title: chat.title,
-            first_name: None,
+            title: None, // Chat doesn't have title/tag, so we leave it empty. It can be filled later from `Message::author_signature` with `with_title`.
+            first_name: chat.title, // For chats, the title field is used to store the chat's name, so we put it in first_name.
             last_name: None,
             is_premium: None,
             birthdate: None,
@@ -234,12 +234,12 @@ impl fmt::Display for DoxReport {
             }
             SubjectId::Chat(_) => {
                 let name = self
-                    .title
+                    .first_name
                     .as_deref()
                     .or(self.first_name.as_deref())
                     .or(self.last_name.as_deref())
                     .unwrap_or("");
-                write!(f, " 的 <code>{}</code>", escape(name))?;
+                write!(f, " 的 <code>{}</code> ", escape(name))?;
             }
         }
         write!(f, "吗？")

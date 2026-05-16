@@ -27,7 +27,7 @@ impl Command for Dox {
             // Can't determine doxer
             return include_str!("../messages/doxer-identification-failed.html").to_string();
         };
-        doxer_report.title = msg.sender_tag;
+        doxer_report = doxer_report.with_title(msg.sender_tag.or(msg.author_signature));
         // Create a report for the doxee
         let report = match self.doxee {
             // Target not provided in command
@@ -47,6 +47,7 @@ impl Command for Dox {
                                 .complete_full_info(bot)
                                 .await
                         }
+                        // TODO: Chat | Channel origin
                         _ => {
                             return include_str!("../messages/invalid-origin.html").to_string();
                         }
@@ -66,7 +67,7 @@ impl Command for Dox {
                             .to_string();
                     };
                     doxee_report
-                        .with_title(reply.sender_tag)
+                        .with_title(reply.sender_tag.or(reply.author_signature))
                         .complete_full_info(bot)
                         .await
                 }
