@@ -19,7 +19,7 @@ pub async fn handle_non_command(bot: &Bot, msg: Message) -> Option<String> {
                 return Some(
                     include_str!("./messages/doxer-identification-failed.html").to_string(),
                 );
-            };
+            }
             match *origin {
                 MessageOrigin::User(origin_user) => {
                     // ... from a user
@@ -40,7 +40,7 @@ pub async fn handle_non_command(bot: &Bot, msg: Message) -> Option<String> {
                         .with_title(origin_chat.author_signature)
                         .to_string()
                 }
-                _ => {
+                MessageOrigin::HiddenUser(_) => {
                     // ... from something else
                     debug!("Cannot determine the origin as a user: {origin:?}");
                     include_str!("messages/invalid-origin.html").to_string()

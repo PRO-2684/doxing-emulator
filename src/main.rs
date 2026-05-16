@@ -1,4 +1,6 @@
 #![warn(clippy::all, clippy::nursery, clippy::pedantic, clippy::cargo)]
+#![allow(clippy::multiple_crate_versions, reason = "Dependency")]
+#![allow(clippy::future_not_send, reason = "Single-threaded runtime")]
 
 use anyhow::Result;
 use compio::fs::read;

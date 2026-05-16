@@ -15,6 +15,7 @@ pub struct Dox {
 impl Command for Dox {
     const TRIGGER: &'static str = "dox";
     const HELP: &'static str = "盒盒盒";
+    #[allow(clippy::similar_names)]
     async fn execute(self, bot: &Bot, msg: Message, _username: &str) -> String {
         // Reject users that the bot doesn't know
         let mut doxer_report = if let Some(chat) = msg.sender_chat {

@@ -5,6 +5,7 @@
 #![deny(missing_docs)]
 #![warn(clippy::all, clippy::nursery, clippy::pedantic, clippy::cargo)]
 #![allow(clippy::multiple_crate_versions, reason = "Dependency")]
+#![allow(clippy::future_not_send, reason = "Single-threaded runtime")]
 
 mod commands;
 mod dox_impl;
@@ -55,7 +56,7 @@ pub async fn run(config: Config) -> Result<()> {
     if let Some(proxy) = config.proxy {
         let proxy = Proxy::all(proxy)?;
         builder = builder.proxy(proxy);
-    };
+    }
     let client = builder.build()?;
 
     let bot = Bot { api_url, client };

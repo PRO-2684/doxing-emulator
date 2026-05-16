@@ -62,6 +62,7 @@ pub struct DoxReport {
 
 impl DoxReport {
     /// Create a new [`DoxReport`] from given given user, title and full info.
+    #[must_use]
     pub fn new(user: User, title: Option<String>, full_info: Option<ChatFullInfo>) -> Self {
         let mut report = Self::from_user(user);
         if title.is_some() {
@@ -74,6 +75,7 @@ impl DoxReport {
     }
 
     /// Create a new [`DoxReport`] from given [`User`].
+    #[must_use]
     pub fn from_user(user: User) -> Self {
         Self {
             subject: SubjectId::User(user.id),
@@ -88,6 +90,7 @@ impl DoxReport {
         }
     }
     /// Create a new [`DoxReport`] from given [`Chat`].
+    #[must_use]
     pub fn from_chat(chat: Chat) -> Self {
         Self {
             subject: SubjectId::Chat(chat.id),
@@ -102,6 +105,7 @@ impl DoxReport {
         }
     }
     /// Create a new [`DoxReport`] from given [`ChatFullInfo`].
+    #[must_use]
     pub fn from_full_info(full_info: ChatFullInfo) -> Self {
         Self {
             subject: SubjectId::Chat(full_info.id),
@@ -124,6 +128,7 @@ impl DoxReport {
     }
 
     /// Add title/tag to the [`DoxReport`].
+    #[must_use]
     pub fn with_title(mut self, title: Option<String>) -> Self {
         self.title = title;
         self
@@ -154,24 +159,21 @@ impl DoxReport {
     pub async fn complete_title(mut self, bot: &Bot, chat_id: Option<i64>) -> Self {
         if self.title.is_none()
             && let Some(user_id) = self.subject.as_user_id()
+            && let Some((_, title)) = get_user_title_by_id(bot, user_id, chat_id).await
         {
-            if let Some((_, title)) = get_user_title_by_id(bot, user_id, chat_id).await {
-                self.title = title;
-            }
+            self.title = title;
         }
         self
     }
     /// Complete the full info of the report.
     pub async fn complete_full_info(mut self, bot: &Bot) -> Self {
-        if self.birthdate.is_none()
+        if (self.birthdate.is_none()
             || self.business_location.is_none()
-            || self.personal_chat.is_none()
+            || self.personal_chat.is_none())
+            && let Some(chat_id) = self.subject.chat_id_for_get_chat()
+            && let Some(full_info) = get_full_info(bot, chat_id).await
         {
-            if let Some(chat_id) = self.subject.chat_id_for_get_chat()
-                && let Some(full_info) = get_full_info(bot, chat_id).await
-            {
-                self = self.with_full_info(full_info);
-            }
+            self = self.with_full_info(full_info);
         }
         self
     }
@@ -320,8 +322,7 @@ async fn get_user_title_by_id(
 /// Whether the given string contains "🍥" or "🏳️‍⚧️".
 fn fish_cake(s: &Option<String>) -> bool {
     s.as_ref()
-        .map(|s| s.find('🍥').is_some() || s.find("🏳️‍⚧️").is_some())
-        .unwrap_or_default()
+        .is_some_and(|s| s.find('🍥').is_some() || s.contains("🏳️‍⚧️"))
 }
 
 /// Escapes the given string, as mentioned by [the docs](https://core.telegram.org/bots/api#html-style) on Telegram.
