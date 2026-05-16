@@ -53,7 +53,7 @@ impl Command for Dox {
                                 .with_title(chat.author_signature),
                             MessageOrigin::Channel(channel) => DoxReport::from_chat(channel.chat)
                                 .with_title(channel.author_signature),
-                            _ => {
+                            MessageOrigin::HiddenUser(_) => {
                                 return include_str!("../messages/invalid-origin.html").to_string();
                             }
                         },
