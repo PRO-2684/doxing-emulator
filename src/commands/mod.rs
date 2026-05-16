@@ -16,12 +16,7 @@ pub trait Command {
     /// Help message.
     const HELP: &'static str;
     /// Execute the command.
-    fn execute(
-        self,
-        bot: &Bot,
-        msg: Message,
-        username: &str,
-    ) -> impl Future<Output = String> + Send;
+    fn execute(self, bot: &Bot, msg: Message, username: &str) -> impl Future<Output = String>;
 }
 
 /// Available commands.
