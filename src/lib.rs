@@ -56,7 +56,7 @@ pub async fn run(config: Config) -> Result<()> {
         let proxy = Proxy::all(proxy)?;
         builder = builder.proxy(proxy);
     };
-    let client = builder.build();
+    let client = builder.build()?;
 
     let bot = Bot { api_url, client };
 
