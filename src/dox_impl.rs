@@ -9,12 +9,39 @@ use frakti::{
 use log::warn;
 use std::fmt;
 
+/// Identifier for either Telegram user or chat.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SubjectId {
+    /// Telegram user ID.
+    User(u64),
+    /// Telegram chat/channel/group ID.
+    Chat(i64),
+}
+
+impl SubjectId {
+    /// Return user ID if subject is a user.
+    #[must_use]
+    pub const fn as_user_id(self) -> Option<u64> {
+        match self {
+            Self::User(id) => Some(id),
+            Self::Chat(_) => None,
+        }
+    }
+
+    /// Return chat ID usable with `get_chat`.
+    #[must_use]
+    pub fn chat_id_for_get_chat(self) -> Option<i64> {
+        match self {
+            Self::User(id) => i64::try_from(id).ok(),
+            Self::Chat(id) => Some(id),
+        }
+    }
+}
+
 /// A report containing all available information about a user.
 pub struct DoxReport {
-    /// The user's ID as u64.
-    pub id: u64,
-    /// The chat ID as i64.
-    pub chat_id: i64,
+    /// User or chat this report describes.
+    pub subject: SubjectId,
     /// The user's username, if any.
     pub username: Option<String>,
     /// The user's title/tag in the chat, if any.
@@ -49,11 +76,7 @@ impl DoxReport {
     /// Create a new [`DoxReport`] from given [`User`].
     pub fn from_user(user: User) -> Self {
         Self {
-            id: user.id,
-            chat_id: user.id.try_into().unwrap_or_else(|e| {
-                warn!("Cannot convert user id {} to chat id: {e:?}", user.id);
-                0
-            }),
+            subject: SubjectId::User(user.id),
             username: user.username,
             title: None,
             first_name: Some(user.first_name),
@@ -67,11 +90,7 @@ impl DoxReport {
     /// Create a new [`DoxReport`] from given [`Chat`].
     pub fn from_chat(chat: Chat) -> Self {
         Self {
-            id: chat.id.try_into().unwrap_or_else(|e| {
-                warn!("Cannot convert chat id {} to user id: {e:?}", chat.id);
-                0
-            }),
-            chat_id: chat.id,
+            subject: SubjectId::Chat(chat.id),
             username: chat.username,
             title: chat.title,
             first_name: None,
@@ -85,11 +104,7 @@ impl DoxReport {
     /// Create a new [`DoxReport`] from given [`ChatFullInfo`].
     pub fn from_full_info(full_info: ChatFullInfo) -> Self {
         Self {
-            id: full_info.id.try_into().unwrap_or_else(|e| {
-                warn!("Cannot convert chat id {} to user id: {e:?}", full_info.id);
-                0
-            }),
-            chat_id: full_info.id,
+            subject: SubjectId::Chat(full_info.id),
             username: full_info.username,
             title: None,
             first_name: full_info.first_name,
@@ -137,8 +152,10 @@ impl DoxReport {
     }
     /// Complete the title of the report.
     pub async fn complete_title(mut self, bot: &Bot, chat_id: Option<i64>) -> Self {
-        if self.title.is_none() {
-            if let Some((_, title)) = get_user_title_by_id(bot, self.id, chat_id).await {
+        if self.title.is_none()
+            && let Some(user_id) = self.subject.as_user_id()
+        {
+            if let Some((_, title)) = get_user_title_by_id(bot, user_id, chat_id).await {
                 self.title = title;
             }
         }
@@ -150,7 +167,9 @@ impl DoxReport {
             || self.business_location.is_none()
             || self.personal_chat.is_none()
         {
-            if let Some(full_info) = get_full_info(bot, self.chat_id).await {
+            if let Some(chat_id) = self.subject.chat_id_for_get_chat()
+                && let Some(full_info) = get_full_info(bot, chat_id).await
+            {
                 self = self.with_full_info(full_info);
             }
         }
@@ -160,7 +179,10 @@ impl DoxReport {
 
 impl fmt::Display for DoxReport {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "您好，请问是用户 ID 为 <code>{}</code>", self.id)?;
+        match self.subject {
+            SubjectId::User(id) => write!(f, "您好，请问是用户 ID 为 <code>{id}</code>")?,
+            SubjectId::Chat(id) => write!(f, "您好，请问是群聊/频道 ID 为 <code>{id}</code>")?,
+        }
         if let Some(username) = &self.username {
             write!(f, "，用户名为 <code>@{username}</code>")?;
         }
@@ -191,21 +213,34 @@ impl fmt::Display for DoxReport {
                 warn!("Cannot get username of personal channel: {}", channel.id);
             }
         }
-        if let Some(first_name) = &self.first_name {
-            write!(f, " 的 <code>{}", escape(first_name))?;
-        } else {
-            write!(f, " 的 <code>")?;
-        }
-        if let Some(last_name) = &self.last_name {
-            write!(f, " {}", escape(last_name))?;
-        }
-        write!(f, "</code> ")?;
-        if fish_cake(&self.first_name) || fish_cake(&self.last_name) {
-            write!(f, "南梁")?;
-        } else if self.is_premium == Some(true) {
-            write!(f, "富哥")?;
-        } else {
-            write!(f, "先生")?;
+        match self.subject {
+            SubjectId::User(_) => {
+                if let Some(first_name) = &self.first_name {
+                    write!(f, " 的 <code>{}", escape(first_name))?;
+                } else {
+                    write!(f, " 的 <code>")?;
+                }
+                if let Some(last_name) = &self.last_name {
+                    write!(f, " {}", escape(last_name))?;
+                }
+                write!(f, "</code> ")?;
+                if fish_cake(&self.first_name) || fish_cake(&self.last_name) {
+                    write!(f, "南梁")?;
+                } else if self.is_premium == Some(true) {
+                    write!(f, "富哥")?;
+                } else {
+                    write!(f, "先生")?;
+                }
+            }
+            SubjectId::Chat(_) => {
+                let name = self
+                    .title
+                    .as_deref()
+                    .or(self.first_name.as_deref())
+                    .or(self.last_name.as_deref())
+                    .unwrap_or("");
+                write!(f, " 的 <code>{}</code>", escape(name))?;
+            }
         }
         write!(f, "吗？")
     }
@@ -294,4 +329,39 @@ fn escape(s: &str) -> String {
     s.replace('&', "&amp;")
         .replace('<', "&lt;")
         .replace('>', "&gt;")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{DoxReport, SubjectId};
+
+    #[test]
+    fn user_subject_converts_to_chat_id_when_possible() {
+        assert_eq!(SubjectId::User(123).chat_id_for_get_chat(), Some(123));
+    }
+
+    #[test]
+    fn chat_subject_never_becomes_user_id() {
+        assert_eq!(SubjectId::Chat(-1002496139642).as_user_id(), None);
+    }
+
+    #[test]
+    fn chat_display_uses_chat_id_without_wrapping() {
+        let report = DoxReport {
+            subject: SubjectId::Chat(-1002496139642),
+            username: None,
+            title: Some("LSPosed Internal Test".to_string()),
+            first_name: None,
+            last_name: None,
+            is_premium: None,
+            birthdate: None,
+            business_location: None,
+            personal_chat: None,
+        };
+
+        let rendered = report.to_string();
+        assert!(rendered.contains("群聊/频道 ID 为 <code>-1002496139642</code>"));
+        assert!(!rendered.contains("184467"));
+        assert!(!rendered.contains("先生"));
+    }
 }

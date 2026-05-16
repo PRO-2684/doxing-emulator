@@ -1,6 +1,6 @@
 //! Module for handling inline queries.
 
-use super::dox_impl::DoxReport;
+use super::dox_impl::{DoxReport, SubjectId};
 use frakti::{
     ParseMode,
     client_cyper::Bot,
@@ -36,7 +36,10 @@ pub async fn handle_inline_query(bot: &Bot, inline: InlineQuery) -> InlineQueryR
                         .first_name
                         .or(report.last_name)
                         .or(report.username)
-                        .unwrap_or_else(|| report.id.to_string())
+                        .unwrap_or_else(|| match report.subject {
+                            SubjectId::User(id) => id.to_string(),
+                            SubjectId::Chat(id) => id.to_string(),
+                        })
                 ),
                 "盒盒盒",
             ),
