@@ -65,6 +65,10 @@ If the path is not specified, defaults to `config.toml`.
     - If replied to a message, doxes the sender of the replied message
     - Otherwise, doxes the sender of the mentioning message
 
+A sample response could be:
+
+您好，请问是用户 ID 为 `0000000000`，用户名为 `@username`，生日在 01 月 01 日，位于 `地球`，开通了 tg 空间 @channel 的 `FirstName` 富哥吗？
+
 ## ✅ TODO
 
 - Check `forward_origin` and `external_reply` for `/dox` command.

@@ -199,7 +199,11 @@ impl fmt::Display for DoxReport {
             }
         }
         if let Some(business_location) = &self.business_location {
-            write!(f, "，位于 {}", escape(&business_location.address))?;
+            write!(
+                f,
+                "，位于 <code>{}</code>",
+                escape(&business_location.address)
+            )?;
             if let Some(location) = &business_location.location {
                 write!(
                     f,
