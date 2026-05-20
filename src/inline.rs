@@ -22,7 +22,7 @@ pub async fn handle_inline_query(bot: &Bot, inline: InlineQuery) -> InlineQueryR
         doxer_report = doxer_report.complete_full_info(bot).await;
         create_article(
             doxer_report.to_string(),
-            format!("开盒 {}", doxer_report.first_name.unwrap_or_default()),
+            format!("开盒 {}", doxer_report.display_name.unwrap_or_default()),
             "盒盒盒",
         )
     } else if let Ok(user_id) = query.parse() {
@@ -33,7 +33,7 @@ pub async fn handle_inline_query(bot: &Bot, inline: InlineQuery) -> InlineQueryR
                 format!(
                     "开盒 {}",
                     report
-                        .first_name
+                        .display_name
                         .or(report.last_name)
                         .or(report.username)
                         .unwrap_or_else(|| match report.subject {

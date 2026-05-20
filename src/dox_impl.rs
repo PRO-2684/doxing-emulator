@@ -44,10 +44,10 @@ pub struct DoxReport {
     pub subject: SubjectId,
     /// The user's username, if any.
     pub username: Option<String>,
-    /// The user's title/tag in the chat, if any.
-    pub title: Option<String>,
-    /// The user's first name, if any.
-    pub first_name: Option<String>,
+    /// The user's title/tag in the chat or signature, if any.
+    pub sender_title: Option<String>,
+    /// The user's first name or chat name, if any.
+    pub display_name: Option<String>,
     /// The user's last name, if any.
     pub last_name: Option<String>,
     /// If the user is premium.
@@ -80,8 +80,8 @@ impl DoxReport {
         Self {
             subject: SubjectId::User(user.id),
             username: user.username,
-            title: None,
-            first_name: Some(user.first_name),
+            sender_title: None,
+            display_name: Some(user.first_name),
             last_name: user.last_name,
             is_premium: user.is_premium,
             birthdate: None,
@@ -95,8 +95,8 @@ impl DoxReport {
         Self {
             subject: SubjectId::Chat(chat.id),
             username: chat.username,
-            title: None, // Chat doesn't have title/tag, so we leave it empty. It can be filled later from `Message::author_signature` with `with_title`.
-            first_name: chat.title, // For chats, the title field is used to store the chat's name, so we put it in first_name.
+            sender_title: None, // Chat doesn't have title/tag, so we leave it empty. It can be filled later from `Message::author_signature` with `with_title`.
+            display_name: chat.title, // For chats, the title field is used to store the chat's name, so we put it in first_name.
             last_name: None,
             is_premium: None,
             birthdate: None,
@@ -110,8 +110,8 @@ impl DoxReport {
         Self {
             subject: SubjectId::Chat(full_info.id),
             username: full_info.username,
-            title: None,
-            first_name: full_info.first_name,
+            sender_title: None,
+            display_name: full_info.first_name,
             last_name: full_info.last_name,
             is_premium: None,
             birthdate: full_info.birthdate,
@@ -130,7 +130,7 @@ impl DoxReport {
     /// Add title/tag to the [`DoxReport`].
     #[must_use]
     pub fn with_title(mut self, title: Option<String>) -> Self {
-        self.title = title;
+        self.sender_title = title;
         self
     }
     /// Update the [`DoxReport`] with given [`ChatFullInfo`], keeping existing fields if the new info doesn't have them.
@@ -138,8 +138,8 @@ impl DoxReport {
         if self.username.is_none() {
             self.username = full_info.username;
         }
-        if self.first_name.is_none() {
-            self.first_name = full_info.first_name;
+        if self.display_name.is_none() {
+            self.display_name = full_info.first_name;
         }
         if self.last_name.is_none() {
             self.last_name = full_info.last_name;
@@ -157,11 +157,11 @@ impl DoxReport {
     }
     /// Complete the title of the report.
     pub async fn complete_title(mut self, bot: &Bot, chat_id: Option<i64>) -> Self {
-        if self.title.is_none()
+        if self.sender_title.is_none()
             && let Some(user_id) = self.subject.as_user_id()
             && let Some((_, title)) = get_user_title_by_id(bot, user_id, chat_id).await
         {
-            self.title = title;
+            self.sender_title = title;
         }
         self
     }
@@ -188,7 +188,7 @@ impl fmt::Display for DoxReport {
         if let Some(username) = &self.username {
             write!(f, "，用户名为 <code>@{username}</code>")?;
         }
-        if let Some(title) = &self.title {
+        if let Some(title) = &self.sender_title {
             write!(f, "，头衔为 <code>{}</code>", escape(title))?;
         }
         if let Some(birthday) = &self.birthdate {
@@ -221,8 +221,8 @@ impl fmt::Display for DoxReport {
         }
         match self.subject {
             SubjectId::User(_) => {
-                if let Some(first_name) = &self.first_name {
-                    write!(f, " 的 <code>{}", escape(first_name))?;
+                if let Some(display_name) = &self.display_name {
+                    write!(f, " 的 <code>{}", escape(display_name))?;
                 } else {
                     write!(f, " 的 <code>")?;
                 }
@@ -230,7 +230,7 @@ impl fmt::Display for DoxReport {
                     write!(f, " {}", escape(last_name))?;
                 }
                 write!(f, "</code> ")?;
-                if fish_cake(self.first_name.as_ref()) || fish_cake(self.last_name.as_ref()) {
+                if fish_cake(self.display_name.as_ref()) || fish_cake(self.last_name.as_ref()) {
                     write!(f, "南梁")?;
                 } else if self.is_premium == Some(true) {
                     write!(f, "富哥")?;
@@ -240,9 +240,9 @@ impl fmt::Display for DoxReport {
             }
             SubjectId::Chat(_) => {
                 let name = self
-                    .first_name
+                    .display_name
                     .as_deref()
-                    .or(self.first_name.as_deref())
+                    .or(self.display_name.as_deref())
                     .or(self.last_name.as_deref())
                     .unwrap_or("");
                 write!(f, " 的 <code>{}</code> ", escape(name))?;
@@ -354,8 +354,8 @@ mod tests {
         let report = DoxReport {
             subject: SubjectId::Chat(-1_000_000_000_000),
             username: None,
-            title: Some("Test".to_string()),
-            first_name: None,
+            sender_title: Some("Test".to_string()),
+            display_name: None,
             last_name: None,
             is_premium: None,
             birthdate: None,
