@@ -4,7 +4,7 @@ use frakti::{
     AsyncTelegramApi,
     client_cyper::Bot,
     methods::{GetChatMemberParams, GetChatParams},
-    types::{Birthdate, BusinessLocation, Chat, ChatFullInfo, ChatMember, User},
+    types::{Birthdate, BusinessLocation, Chat, ChatFullInfo, ChatMember, MessageOrigin, User},
 };
 use log::warn;
 use std::fmt;
@@ -119,6 +119,48 @@ impl DoxReport {
             personal_chat: full_info.personal_chat.map(|c| *c),
         }
     }
+
+    /// Create a new [`DoxReport`] from message sender fields.
+    #[must_use]
+    pub fn from_sender(
+        from: Option<Box<User>>,
+        sender_chat: Option<Box<Chat>>,
+        sender_title: Option<String>,
+    ) -> Option<Self> {
+        let report = if let Some(chat) = sender_chat {
+            Self::from_chat(*chat)
+        } else if let Some(user) = from {
+            Self::from_user(*user)
+        } else {
+            return None;
+        };
+        Some(report.with_title(sender_title))
+    }
+
+    /// Create a completed [`DoxReport`] from a forwarded/external message origin.
+    pub async fn from_origin(
+        bot: &Bot,
+        origin: MessageOrigin,
+        chat_id: Option<i64>,
+    ) -> Option<Self> {
+        match origin {
+            MessageOrigin::User(origin_user) => Some(
+                Self::from_user(origin_user.sender_user)
+                    .complete_title(bot, chat_id)
+                    .await
+                    .complete_full_info(bot)
+                    .await,
+            ),
+            MessageOrigin::Channel(origin_channel) => Some(
+                Self::from_chat(origin_channel.chat).with_title(origin_channel.author_signature),
+            ),
+            MessageOrigin::Chat(origin_chat) => Some(
+                Self::from_chat(origin_chat.sender_chat).with_title(origin_chat.author_signature),
+            ),
+            MessageOrigin::HiddenUser(_) => None,
+        }
+    }
+
     /// Try to create a new completed [`DoxReport`] from given user id and optional chat id, returning None if it fails.
     pub async fn from_id(bot: &Bot, user_id: u64, chat_id: Option<i64>) -> Option<Self> {
         let (user, title) = get_user_title_by_id(bot, user_id, chat_id).await?;
@@ -242,7 +284,6 @@ impl fmt::Display for DoxReport {
                 let name = self
                     .display_name
                     .as_deref()
-                    .or(self.display_name.as_deref())
                     .or(self.last_name.as_deref())
                     .unwrap_or("");
                 write!(f, " 的 <code>{}</code> ", escape(name))?;

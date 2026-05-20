@@ -3,7 +3,7 @@
 use super::dox_impl::DoxReport;
 use frakti::{
     client_cyper::Bot,
-    types::{ChatType, Message, MessageOrigin},
+    types::{ChatType, Message},
 };
 use log::{debug, info};
 
@@ -20,32 +20,16 @@ pub async fn handle_non_command(bot: &Bot, msg: Message) -> Option<String> {
                     include_str!("./messages/doxer-identification-failed.html").to_string(),
                 );
             }
-            match *origin {
-                MessageOrigin::User(origin_user) => {
-                    // ... from a user
-                    DoxReport::from_user(origin_user.sender_user)
-                        .complete_full_info(bot)
-                        .await
-                        .to_string()
-                }
-                MessageOrigin::Channel(origin_channel) => {
-                    // ... from a channel
-                    DoxReport::from_chat(origin_channel.chat)
-                        .with_title(origin_channel.author_signature)
-                        .to_string()
-                }
-                MessageOrigin::Chat(origin_chat) => {
-                    // ... from a chat
-                    DoxReport::from_chat(origin_chat.sender_chat)
-                        .with_title(origin_chat.author_signature)
-                        .to_string()
-                }
-                MessageOrigin::HiddenUser(_) => {
-                    // ... from something else
-                    debug!("Cannot determine the origin as a user: {origin:?}");
-                    include_str!("messages/invalid-origin.html").to_string()
-                }
-            }
+            debug!("Handling forwarded origin: {origin:?}");
+            DoxReport::from_origin(bot, *origin, None)
+                .await
+                .map_or_else(
+                    || {
+                        debug!("Cannot determine the origin as a user");
+                        include_str!("messages/invalid-origin.html").to_string()
+                    },
+                    |report| report.to_string(),
+                )
         } else {
             // Not forwarded message - incomprehensible
             debug!(
