@@ -12,7 +12,7 @@ pub async fn handle_guest_message(bot: &Bot, msg: Message) -> InlineQueryResultA
 
     // Delegate to `dox` command
     let dox = Dox { doxee: None };
-    let report = dox.execute(bot, msg, "").await;
+    let report = Box::pin(dox.execute(bot, msg, "")).await;
 
     create_article(report, "Title", "Description")
 }

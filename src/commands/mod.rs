@@ -78,7 +78,7 @@ impl Commands {
         info!("Executing command: {self:?}");
         match self {
             Self::Help(help) => help.execute(bot, msg, username).await,
-            Self::Dox(dox) => dox.execute(bot, msg, username).await,
+            Self::Dox(dox) => Box::pin(dox.execute(bot, msg, username)).await,
         }
     }
 }

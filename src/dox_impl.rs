@@ -165,7 +165,7 @@ impl DoxReport {
     /// Create a completed [`DoxReport`] from an external reply info.
     pub async fn from_external_reply(bot: &Bot, external: ExternalReplyInfo) -> Option<Self> {
         let chat_id = external.chat.map(|chat| chat.id);
-        DoxReport::from_origin(bot, external.origin, chat_id).await
+        Self::from_origin(bot, external.origin, chat_id).await
     }
     /// Try to create a new completed [`DoxReport`] from given user id and optional chat id, returning None if it fails.
     pub async fn from_id(bot: &Bot, user_id: u64, chat_id: Option<i64>) -> Option<Self> {

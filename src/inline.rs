@@ -1,6 +1,9 @@
 //! Module for handling inline queries.
 
-use super::dox_impl::{DoxReport, SubjectId};
+use super::{
+    dox_impl::{DoxReport, SubjectId},
+    messages::BotError,
+};
 use frakti::{
     ParseMode,
     client_cyper::Bot,
@@ -44,18 +47,14 @@ pub async fn handle_inline_query(bot: &Bot, inline: InlineQuery) -> InlineQueryR
                 "盒盒盒",
             ),
             None => create_article(
-                include_str!("./messages/doxee-identification-failed.html"),
+                BotError::DoxeeIdentificationFailed,
                 "ERR_DOXEE_IDENTIFICATION_FAILED",
                 "马冬什么？马冬梅。什么冬梅啊？马冬梅啊。马什么梅啊？行，大爷，您先凉快吧。",
             ),
         }
     } else {
         // Not user id
-        create_article(
-            include_str!("./messages/not-user-id.html"),
-            "ERR_NOT_USER_ID",
-            "发的啥呀这是？",
-        )
+        create_article(BotError::NotUserId, "ERR_NOT_USER_ID", "发的啥呀这是？")
     }
 }
 

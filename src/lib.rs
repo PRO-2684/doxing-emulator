@@ -11,6 +11,7 @@ mod commands;
 mod dox_impl;
 mod guest;
 mod inline;
+mod messages;
 mod non_command;
 mod setup;
 

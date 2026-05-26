@@ -32,6 +32,5 @@ A sample response could be:
 
 ## ✅ TODO
 
-- Too much duplicated code. Consider further abstraction.
 - Avatar DC.
 - Cache for `get_full_info` and `get_user_by_id`.

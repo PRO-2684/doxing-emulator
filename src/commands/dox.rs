@@ -1,6 +1,7 @@
 //! The dox command.
 
 use super::{Command, dox_impl::DoxReport};
+use crate::messages::BotError;
 use frakti::{client_cyper::Bot, types::Message};
 
 /// The dox command.
@@ -21,7 +22,7 @@ impl Command for Dox {
             msg.sender_tag.or(msg.author_signature),
         ) else {
             // Can't determine doxer
-            return include_str!("../messages/doxer-identification-failed.html").to_string();
+            return BotError::DoxerIdentificationFailed.to_string();
         };
         // Create a report for the doxee
         let report = match self.doxee {
@@ -34,9 +35,10 @@ impl Command for Dox {
                         None => doxer_report.complete_full_info(bot).await,
                         // External reply message
                         Some(external) => {
-                            let Some(report) = DoxReport::from_external_reply(bot, *external).await
+                            let Some(report) =
+                                Box::pin(DoxReport::from_external_reply(bot, *external)).await
                             else {
-                                return include_str!("../messages/invalid-origin.html").to_string();
+                                return BotError::InvalidOrigin.to_string();
                             };
                             report
                         }
@@ -44,23 +46,21 @@ impl Command for Dox {
                     // Reply message
                     Some(reply) => {
                         if let Some(forward_origin) = reply.forward_origin {
-                            // Reply message is forwarded
+                            // Replied message is forwarded
                             match DoxReport::from_origin(bot, *forward_origin, Some(reply.chat.id))
                                 .await
                             {
                                 Some(report) => report,
                                 None => {
-                                    return include_str!("../messages/invalid-origin.html")
-                                        .to_string();
+                                    return BotError::InvalidOrigin.to_string();
                                 }
                             }
                         } else if let Some(external) = reply.external_reply {
-                            // Reply message is an external reply
-                            match DoxReport::from_external_reply(bot, *external).await {
+                            // Replied message is an external reply
+                            match Box::pin(DoxReport::from_external_reply(bot, *external)).await {
                                 Some(report) => report,
                                 None => {
-                                    return include_str!("../messages/invalid-origin.html")
-                                        .to_string();
+                                    return BotError::InvalidOrigin.to_string();
                                 }
                             }
                         } else if let Some(doxee_report) = DoxReport::from_sender(
@@ -72,8 +72,7 @@ impl Command for Dox {
                             doxee_report.complete_full_info(bot).await
                         } else {
                             // Can't determine doxee
-                            return include_str!("../messages/doxee-identification-failed.html")
-                                .to_string();
+                            return BotError::DoxeeIdentificationFailed.to_string();
                         }
                     }
                 }
@@ -85,13 +84,12 @@ impl Command for Dox {
                     match DoxReport::from_id(bot, user_id, Some(msg.chat.id)).await {
                         Some(report) => report,
                         None => {
-                            return include_str!("../messages/doxee-identification-failed.html")
-                                .to_string();
+                            return BotError::DoxeeIdentificationFailed.to_string();
                         }
                     }
                 } else {
                     // Not user id
-                    return include_str!("../messages/not-user-id.html").to_string();
+                    return BotError::NotUserId.to_string();
                 }
             }
         };

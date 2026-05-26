@@ -1,6 +1,6 @@
 //! Module for handling non-command messages.
 
-use super::dox_impl::DoxReport;
+use super::{dox_impl::DoxReport, messages::BotError};
 use frakti::{
     client_cyper::Bot,
     types::{ChatType, Message},
@@ -16,9 +16,7 @@ pub async fn handle_non_command(bot: &Bot, msg: Message) -> Option<String> {
             // The message is forwarded
             if msg.from.is_none() && msg.sender_chat.is_none() {
                 // Can't determine doxer
-                return Some(
-                    include_str!("./messages/doxer-identification-failed.html").to_string(),
-                );
+                return Some(BotError::DoxerIdentificationFailed.to_string());
             }
             debug!("Handling forwarded origin: {origin:?}");
             DoxReport::from_origin(bot, *origin, None)
@@ -26,7 +24,7 @@ pub async fn handle_non_command(bot: &Bot, msg: Message) -> Option<String> {
                 .map_or_else(
                     || {
                         debug!("Cannot determine the origin as a user");
-                        include_str!("messages/invalid-origin.html").to_string()
+                        BotError::InvalidOrigin.to_string()
                     },
                     |report| report.to_string(),
                 )
@@ -36,7 +34,7 @@ pub async fn handle_non_command(bot: &Bot, msg: Message) -> Option<String> {
                 "Not a command or forwarded message: {:?}",
                 msg.text.as_ref()
             );
-            include_str!("messages/incomprehensible.html").to_string()
+            BotError::Incomprehensible.to_string()
         };
         Some(reply)
     } else {
