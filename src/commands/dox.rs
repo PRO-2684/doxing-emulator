@@ -37,12 +37,17 @@ impl Command for Dox {
         };
 
         // Resolve the doxee based on the context and arguments.
-        let result = match self.doxee {
-            None => {
-                resolve_implicit_doxee(bot, (reply_to_message, external_reply), doxer_report).await
-            }
-            Some(raw) => resolve_explicit_doxee(bot, &raw, chat.id).await,
+        let result = if let Some(raw) = self.doxee {
+            Box::pin(resolve_explicit_doxee(bot, &raw, chat.id)).await
+        } else {
+            Box::pin(resolve_implicit_doxee(
+                bot,
+                (reply_to_message, external_reply),
+                doxer_report,
+            ))
+            .await
         };
+
         match result {
             Ok(report) => report.to_string(),
             Err(error) => error.to_string(),
@@ -67,7 +72,7 @@ async fn resolve_implicit_doxee(
     if let Some(reply) = ctx.0 {
         resolve_reply(bot, *reply).await
     } else if let Some(external) = ctx.1 {
-        DoxReport::from_external_reply(bot, *external)
+        Box::pin(DoxReport::from_external_reply(bot, *external))
             .await
             .ok_or(BotError::InvalidOrigin)
     } else {
@@ -84,7 +89,7 @@ async fn resolve_reply(bot: &Bot, reply: Message) -> Result<DoxReport, BotError>
             .ok_or(BotError::InvalidOrigin)
     } else if let Some(external) = reply.external_reply {
         // External replies - the doxee is the sender of the original message, not the replier
-        DoxReport::from_external_reply(bot, *external)
+        Box::pin(DoxReport::from_external_reply(bot, *external))
             .await
             .ok_or(BotError::InvalidOrigin)
     } else if let Some(report) = DoxReport::from_sender(
