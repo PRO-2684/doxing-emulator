@@ -4,7 +4,10 @@ use frakti::{
     AsyncTelegramApi,
     client_cyper::Bot,
     methods::{GetChatMemberParams, GetChatParams},
-    types::{Birthdate, BusinessLocation, Chat, ChatFullInfo, ChatMember, MessageOrigin, User},
+    types::{
+        Birthdate, BusinessLocation, Chat, ChatFullInfo, ChatMember, ExternalReplyInfo,
+        MessageOrigin, User,
+    },
 };
 use log::warn;
 use std::fmt;
@@ -74,6 +77,7 @@ impl DoxReport {
         report
     }
 
+    // Helper methods to create a new [`DoxReport`] from different sources of information.
     /// Create a new [`DoxReport`] from given [`User`].
     #[must_use]
     pub fn from_user(user: User) -> Self {
@@ -119,7 +123,6 @@ impl DoxReport {
             personal_chat: full_info.personal_chat.map(|c| *c),
         }
     }
-
     /// Create a new [`DoxReport`] from message sender fields.
     #[must_use]
     pub fn from_sender(
@@ -136,7 +139,6 @@ impl DoxReport {
         };
         Some(report.with_title(sender_title))
     }
-
     /// Create a completed [`DoxReport`] from a forwarded/external message origin.
     pub async fn from_origin(
         bot: &Bot,
@@ -160,7 +162,11 @@ impl DoxReport {
             MessageOrigin::HiddenUser(_) => None,
         }
     }
-
+    /// Create a completed [`DoxReport`] from an external reply info.
+    pub async fn from_external_reply(bot: &Bot, external: ExternalReplyInfo) -> Option<Self> {
+        let chat_id = external.chat.map(|chat| chat.id);
+        DoxReport::from_origin(bot, external.origin, chat_id).await
+    }
     /// Try to create a new completed [`DoxReport`] from given user id and optional chat id, returning None if it fails.
     pub async fn from_id(bot: &Bot, user_id: u64, chat_id: Option<i64>) -> Option<Self> {
         let (user, title) = get_user_title_by_id(bot, user_id, chat_id).await?;
@@ -169,6 +175,7 @@ impl DoxReport {
         Some(report)
     }
 
+    // Helper methods to update fields of an existing [`DoxReport`].
     /// Add title/tag to the [`DoxReport`].
     #[must_use]
     pub fn with_title(mut self, title: Option<String>) -> Self {

@@ -34,9 +34,7 @@ impl Command for Dox {
                         None => doxer_report.complete_full_info(bot).await,
                         // External reply message
                         Some(external) => {
-                            let chat_id = external.chat.map(|chat| chat.id);
-                            let Some(report) =
-                                DoxReport::from_origin(bot, external.origin, chat_id).await
+                            let Some(report) = DoxReport::from_external_reply(bot, *external).await
                             else {
                                 return include_str!("../messages/invalid-origin.html").to_string();
                             };
@@ -58,8 +56,7 @@ impl Command for Dox {
                             }
                         } else if let Some(external) = reply.external_reply {
                             // Reply message is an external reply
-                            let chat_id = external.chat.map(|chat| chat.id);
-                            match DoxReport::from_origin(bot, external.origin, chat_id).await {
+                            match DoxReport::from_external_reply(bot, *external).await {
                                 Some(report) => report,
                                 None => {
                                     return include_str!("../messages/invalid-origin.html")
