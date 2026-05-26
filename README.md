@@ -32,8 +32,6 @@ A sample response could be:
 
 ## ✅ TODO
 
-- Check `forward_origin` and `external_reply` for `/dox` command.
-- Check `external_reply` for non commands?
 - Too much duplicated code. Consider further abstraction.
 - Avatar DC.
 - Cache for `get_full_info` and `get_user_by_id`.

@@ -45,17 +45,39 @@ impl Command for Dox {
                     },
                     // Reply message
                     Some(reply) => {
-                        // TODO: Check `forward_origin` and `external_reply`
-                        let Some(doxee_report) = DoxReport::from_sender(
+                        if let Some(forward_origin) = reply.forward_origin {
+                            // Reply message is forwarded
+                            match DoxReport::from_origin(bot, *forward_origin, Some(reply.chat.id))
+                                .await
+                            {
+                                Some(report) => report,
+                                None => {
+                                    return include_str!("../messages/invalid-origin.html")
+                                        .to_string();
+                                }
+                            }
+                        } else if let Some(external) = reply.external_reply {
+                            // Reply message is an external reply
+                            let chat_id = external.chat.map(|chat| chat.id);
+                            match DoxReport::from_origin(bot, external.origin, chat_id).await {
+                                Some(report) => report,
+                                None => {
+                                    return include_str!("../messages/invalid-origin.html")
+                                        .to_string();
+                                }
+                            }
+                        } else if let Some(doxee_report) = DoxReport::from_sender(
+                            // Use sender of the replied message
                             reply.from,
                             reply.sender_chat,
                             reply.sender_tag.or(reply.author_signature),
-                        ) else {
+                        ) {
+                            doxee_report.complete_full_info(bot).await
+                        } else {
                             // Can't determine doxee
                             return include_str!("../messages/doxee-identification-failed.html")
                                 .to_string();
-                        };
-                        doxee_report.complete_full_info(bot).await
+                        }
                     }
                 }
             }
