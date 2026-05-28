@@ -2,7 +2,7 @@
 
 use super::{
     dox_impl::{DoxReport, SubjectId},
-    doxee_resolution::{DoxArg, DoxeeSource, resolve},
+    doxee_resolution::{DoxArg, DoxeeSource},
     messages::BotError,
 };
 use frakti::{
@@ -23,7 +23,7 @@ pub async fn handle_inline_query(bot: &Bot, inline: InlineQuery) -> InlineQueryR
         arg,
         from: inline.from,
     };
-    let result = Box::pin(resolve(bot, source))
+    let result = Box::pin(source.resolve_with(bot))
         .await
         .expect("inline query resolution should always reply");
     match result {

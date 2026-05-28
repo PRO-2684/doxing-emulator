@@ -1,7 +1,7 @@
 //! The dox command.
 
 use super::Command;
-use crate::doxee_resolution::{DoxArg, DoxeeSource, resolve};
+use crate::doxee_resolution::{DoxArg, DoxeeSource};
 use frakti::{client_cyper::Bot, types::Message};
 
 /// The dox command.
@@ -17,7 +17,7 @@ impl Command for Dox {
     async fn execute(self, bot: &Bot, msg: Message, _username: &str) -> String {
         let arg = DoxArg::parse(self.doxee.as_deref());
         let source = DoxeeSource::Command { arg, message: msg };
-        let result = Box::pin(resolve(bot, source))
+        let result = Box::pin(source.resolve_with(bot))
             .await
             .expect("command resolution should always reply");
         match result {

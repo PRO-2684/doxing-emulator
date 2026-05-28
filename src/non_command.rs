@@ -1,9 +1,6 @@
 //! Module for handling non-command messages.
 
-use super::{
-    doxee_resolution::{DoxeeSource, resolve},
-    messages::BotError,
-};
+use super::{doxee_resolution::DoxeeSource, messages::BotError};
 use frakti::{
     client_cyper::Bot,
     types::{ChatType, Message},
@@ -21,9 +18,8 @@ pub async fn handle_non_command(bot: &Bot, msg: Message) -> Option<String> {
                 msg.text.as_ref()
             );
         }
-        let source = DoxeeSource::PrivateForward { message: msg };
-        let result = Box::pin(resolve(bot, source)).await?;
-        // .expect("private forward resolution should always reply");
+        let source = DoxeeSource::PrivateMessage { message: msg };
+        let result = Box::pin(source.resolve_with(bot)).await?;
         Some(match result {
             Ok(report) => report.to_string(),
             Err(BotError::InvalidOrigin) => {

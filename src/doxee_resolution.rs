@@ -52,42 +52,27 @@ pub enum DoxeeSource {
         /// Telegram guest message.
         message: Message,
     },
-    /// Private non-command forwarded message.
-    PrivateForward {
+    /// Private non-command message.
+    PrivateMessage {
         /// Telegram private message.
         message: Message,
     },
 }
 
-/// Resolve a doxee from a Telegram source context.
-pub async fn resolve(bot: &Bot, source: DoxeeSource) -> Option<Result<DoxReport, BotError>> {
-    Some(match source {
-        DoxeeSource::Command { arg, message } => {
-            Box::pin(resolve_message_source(bot, arg, message)).await
-        }
-        DoxeeSource::Guest { arg, message } => {
-            Box::pin(resolve_guest_message_source(bot, arg, message)).await
-        }
-        DoxeeSource::Inline { arg, from } => resolve_inline_source(bot, arg, from).await,
-        DoxeeSource::PrivateForward { message } => resolve_private_forward(bot, message).await,
-    })
-}
-
-/// Parse a guest mention invocation.
-#[must_use]
-pub fn parse_guest_invocation(text: Option<&str>, bot_username: &str) -> Option<DoxArg> {
-    let text = text?.trim();
-    let rest = text.strip_prefix('@')?.strip_prefix(bot_username)?;
-    let Some(first) = rest.chars().next() else {
-        return Some(DoxArg::None);
-    };
-    if first.is_whitespace() {
-        return Some(DoxArg::parse(Some(rest)));
+impl DoxeeSource {
+    /// Resolve this source context into a dox report or bot error.
+    pub async fn resolve_with(self, bot: &Bot) -> Option<Result<DoxReport, BotError>> {
+        Some(match self {
+            Self::Command { arg, message } => {
+                Box::pin(resolve_message_source(bot, arg, message)).await
+            }
+            Self::Guest { arg, message } => {
+                Box::pin(resolve_guest_message_source(bot, arg, message)).await
+            }
+            Self::Inline { arg, from } => resolve_inline_source(bot, arg, from).await,
+            Self::PrivateMessage { message } => resolve_private_message(bot, message).await,
+        })
     }
-    if first.is_ascii_alphanumeric() || first == '_' {
-        return None;
-    }
-    Some(DoxArg::Invalid)
 }
 
 async fn resolve_message_source(
@@ -170,7 +155,7 @@ async fn resolve_inline_source(bot: &Bot, arg: DoxArg, from: User) -> Result<Dox
     }
 }
 
-async fn resolve_private_forward(bot: &Bot, msg: Message) -> Result<DoxReport, BotError> {
+async fn resolve_private_message(bot: &Bot, msg: Message) -> Result<DoxReport, BotError> {
     let Message {
         from,
         sender_chat,
@@ -227,7 +212,7 @@ async fn resolve_reply(bot: &Bot, reply: Message) -> Result<DoxReport, BotError>
 
 #[cfg(test)]
 mod tests {
-    use super::{DoxArg, parse_guest_invocation};
+    use super::DoxArg;
 
     #[test]
     fn dox_arg_parse_empty_as_none() {
@@ -245,68 +230,5 @@ mod tests {
     fn dox_arg_parse_invalid_text() {
         assert_eq!(DoxArg::parse(Some("123 extra")), DoxArg::Invalid);
         assert_eq!(DoxArg::parse(Some("-100123")), DoxArg::Invalid);
-    }
-
-    #[test]
-    fn guest_invocation_accepts_exact_mention() {
-        let text = "@DoxingEmulatorBot".to_string();
-        assert_eq!(
-            parse_guest_invocation(Some(&text), "DoxingEmulatorBot"),
-            Some(DoxArg::None)
-        );
-    }
-
-    #[test]
-    fn guest_invocation_accepts_mention_with_user_id() {
-        let text = " @DoxingEmulatorBot 123 ".to_string();
-        assert_eq!(
-            parse_guest_invocation(Some(&text), "DoxingEmulatorBot"),
-            Some(DoxArg::UserId(123))
-        );
-    }
-
-    #[test]
-    fn guest_invocation_rejects_non_token_mention() {
-        let text = "@DoxingEmulatorBot123".to_string();
-        assert_eq!(
-            parse_guest_invocation(Some(&text), "DoxingEmulatorBot"),
-            None
-        );
-    }
-
-    #[test]
-    fn guest_invocation_ignores_non_leading_mention() {
-        let text = "hello @DoxingEmulatorBot 123".to_string();
-        assert_eq!(
-            parse_guest_invocation(Some(&text), "DoxingEmulatorBot"),
-            None
-        );
-    }
-
-    #[test]
-    fn guest_invocation_ignores_other_bot() {
-        let text = "@OtherBot 123".to_string();
-        assert_eq!(
-            parse_guest_invocation(Some(&text), "DoxingEmulatorBot"),
-            None
-        );
-    }
-
-    #[test]
-    fn guest_invocation_replies_to_invalid_mentioned_arg() {
-        let text = "@DoxingEmulatorBot 123 extra".to_string();
-        assert_eq!(
-            parse_guest_invocation(Some(&text), "DoxingEmulatorBot"),
-            Some(DoxArg::Invalid)
-        );
-    }
-
-    #[test]
-    fn guest_invocation_replies_to_invalid_mentioned_punctuation() {
-        let text = "@DoxingEmulatorBot, 123".to_string();
-        assert_eq!(
-            parse_guest_invocation(Some(&text), "DoxingEmulatorBot"),
-            Some(DoxArg::Invalid)
-        );
     }
 }
