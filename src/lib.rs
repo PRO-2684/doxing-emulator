@@ -18,7 +18,8 @@ mod setup;
 
 use anyhow::{Result, bail};
 pub use commands::{Command, Commands};
-pub use dox_impl::DoxReport;
+pub use dox_impl::{DoxReport, SubjectId};
+pub use doxee_resolution::{DoxArg, DoxeeSource};
 use frakti::{
     AsyncTelegramApi, BASE_API_URL, ParseMode,
     client_cyper::Bot,
@@ -31,6 +32,7 @@ use frakti::{
     updates::UpdateContent,
 };
 use log::{error, info, trace};
+pub use messages::BotError;
 use non_command::handle_non_command;
 use serde::Deserialize;
 use setup::{setup_commands, setup_rights};

@@ -1,7 +1,6 @@
 //! Module for handling inline queries.
 
 use super::{
-    dox_impl::{DoxReport, SubjectId},
     doxee_resolution::{DoxArg, DoxeeSource},
     messages::BotError,
 };
@@ -27,7 +26,7 @@ pub async fn handle_inline_query(bot: &Bot, inline: InlineQuery) -> InlineQueryR
         .await
         .expect("inline query resolution should always reply");
     match result {
-        Ok(report) => create_article(report.to_string(), title(&report), "盒盒盒"),
+        Ok(report) => create_article(report.to_string(), report.inline_title(), "盒盒盒"),
         Err(BotError::DoxeeIdentificationFailed) => create_article(
             BotError::DoxeeIdentificationFailed,
             "ERR_DOXEE_IDENTIFICATION_FAILED",
@@ -38,24 +37,6 @@ pub async fn handle_inline_query(bot: &Bot, inline: InlineQuery) -> InlineQueryR
         }
         Err(error) => create_article(error, "ERR", "发的啥呀这是？"), // Should not happen
     }
-}
-
-fn title(report: &DoxReport) -> String {
-    format!(
-        "开盒 {}",
-        report
-            .display_name
-            .as_deref()
-            .or(report.last_name.as_deref())
-            .or(report.username.as_deref())
-            .map_or_else(
-                || match report.subject {
-                    SubjectId::User(id) => id.to_string(),
-                    SubjectId::Chat(id) => id.to_string(),
-                },
-                ToOwned::to_owned,
-            )
-    )
 }
 
 /// Create an article with given message, title and description.

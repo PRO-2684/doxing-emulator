@@ -24,7 +24,7 @@ pub enum SubjectId {
 impl SubjectId {
     /// Return user ID if subject is a user.
     #[must_use]
-    pub const fn as_user_id(self) -> Option<u64> {
+    pub(crate) const fn as_user_id(self) -> Option<u64> {
         match self {
             Self::User(id) => Some(id),
             Self::Chat(_) => None,
@@ -33,7 +33,7 @@ impl SubjectId {
 
     /// Return chat ID usable with `get_chat`.
     #[must_use]
-    pub fn chat_id_for_get_chat(self) -> Option<i64> {
+    pub(crate) fn chat_id_for_get_chat(self) -> Option<i64> {
         match self {
             Self::User(id) => i64::try_from(id).ok(),
             Self::Chat(id) => Some(id),
@@ -66,7 +66,7 @@ pub struct DoxReport {
 impl DoxReport {
     /// Create a new [`DoxReport`] from given given user, title and full info.
     #[must_use]
-    pub fn new(user: User, title: Option<String>, full_info: Option<ChatFullInfo>) -> Self {
+    fn new(user: User, title: Option<String>, full_info: Option<ChatFullInfo>) -> Self {
         let mut report = Self::from_user(user);
         if title.is_some() {
             report = report.with_title(title);
@@ -80,7 +80,7 @@ impl DoxReport {
     // Helper methods to create a new [`DoxReport`] from different sources of information.
     /// Create a new [`DoxReport`] from given [`User`].
     #[must_use]
-    pub fn from_user(user: User) -> Self {
+    pub(crate) fn from_user(user: User) -> Self {
         Self {
             subject: SubjectId::User(user.id),
             username: user.username,
@@ -95,7 +95,7 @@ impl DoxReport {
     }
     /// Create a new [`DoxReport`] from given [`Chat`].
     #[must_use]
-    pub fn from_chat(chat: Chat) -> Self {
+    fn from_chat(chat: Chat) -> Self {
         Self {
             subject: SubjectId::Chat(chat.id),
             username: chat.username,
@@ -108,24 +108,9 @@ impl DoxReport {
             personal_chat: None,
         }
     }
-    /// Create a new [`DoxReport`] from given [`ChatFullInfo`].
-    #[must_use]
-    pub fn from_full_info(full_info: ChatFullInfo) -> Self {
-        Self {
-            subject: SubjectId::Chat(full_info.id),
-            username: full_info.username,
-            sender_title: None,
-            display_name: full_info.first_name,
-            last_name: full_info.last_name,
-            is_premium: None,
-            birthdate: full_info.birthdate,
-            business_location: full_info.business_location,
-            personal_chat: full_info.personal_chat.map(|c| *c),
-        }
-    }
     /// Create a new [`DoxReport`] from message sender fields.
     #[must_use]
-    pub fn from_sender(
+    pub(crate) fn from_sender(
         from: Option<Box<User>>,
         sender_chat: Option<Box<Chat>>,
         sender_title: Option<String>,
@@ -140,7 +125,7 @@ impl DoxReport {
         Some(report.with_title(sender_title))
     }
     /// Create a completed [`DoxReport`] from a forwarded/external message origin.
-    pub async fn from_origin(
+    pub(crate) async fn from_origin(
         bot: &Bot,
         origin: MessageOrigin,
         chat_id: Option<i64>,
@@ -163,12 +148,15 @@ impl DoxReport {
         }
     }
     /// Create a completed [`DoxReport`] from an external reply info.
-    pub async fn from_external_reply(bot: &Bot, external: ExternalReplyInfo) -> Option<Self> {
+    pub(crate) async fn from_external_reply(
+        bot: &Bot,
+        external: ExternalReplyInfo,
+    ) -> Option<Self> {
         let chat_id = external.chat.map(|chat| chat.id);
         Self::from_origin(bot, external.origin, chat_id).await
     }
     /// Try to create a new completed [`DoxReport`] from given user id and optional chat id, returning None if it fails.
-    pub async fn from_id(bot: &Bot, user_id: u64, chat_id: Option<i64>) -> Option<Self> {
+    pub(crate) async fn from_id(bot: &Bot, user_id: u64, chat_id: Option<i64>) -> Option<Self> {
         let (user, title) = get_user_title_by_id(bot, user_id, chat_id).await?;
         let report = Self::new(user, title, None);
         let report = report.complete_full_info(bot).await;
@@ -178,7 +166,7 @@ impl DoxReport {
     // Helper methods to update fields of an existing [`DoxReport`].
     /// Add title/tag to the [`DoxReport`].
     #[must_use]
-    pub fn with_title(mut self, title: Option<String>) -> Self {
+    fn with_title(mut self, title: Option<String>) -> Self {
         self.sender_title = title;
         self
     }
@@ -205,7 +193,7 @@ impl DoxReport {
         self
     }
     /// Complete the title of the report.
-    pub async fn complete_title(mut self, bot: &Bot, chat_id: Option<i64>) -> Self {
+    async fn complete_title(mut self, bot: &Bot, chat_id: Option<i64>) -> Self {
         if self.sender_title.is_none()
             && let Some(user_id) = self.subject.as_user_id()
             && let Some((_, title)) = get_user_title_by_id(bot, user_id, chat_id).await
@@ -215,7 +203,7 @@ impl DoxReport {
         self
     }
     /// Complete the full info of the report.
-    pub async fn complete_full_info(mut self, bot: &Bot) -> Self {
+    pub(crate) async fn complete_full_info(mut self, bot: &Bot) -> Self {
         if (self.birthdate.is_none()
             || self.business_location.is_none()
             || self.personal_chat.is_none())
@@ -225,6 +213,23 @@ impl DoxReport {
             self = self.with_full_info(full_info);
         }
         self
+    }
+
+    pub(crate) fn inline_title(&self) -> String {
+        format!(
+            "开盒 {}",
+            self.display_name
+                .as_deref()
+                .or(self.last_name.as_deref())
+                .or(self.username.as_deref())
+                .map_or_else(
+                    || match self.subject {
+                        SubjectId::User(id) => id.to_string(),
+                        SubjectId::Chat(id) => id.to_string(),
+                    },
+                    ToOwned::to_owned,
+                )
+        )
     }
 }
 
