@@ -77,11 +77,7 @@ pub async fn resolve(bot: &Bot, source: DoxeeSource) -> Option<Result<DoxReport,
 #[must_use]
 pub fn parse_guest_invocation(text: Option<&str>, bot_username: &str) -> Option<DoxArg> {
     let text = text?.trim();
-    let mention = format!("@{bot_username}");
-    if text == mention {
-        return Some(DoxArg::None);
-    }
-    let rest = text.strip_prefix(&mention)?;
+    let rest = text.strip_prefix('@')?.strip_prefix(bot_username)?;
     let Some(first) = rest.chars().next() else {
         return Some(DoxArg::None);
     };
