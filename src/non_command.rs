@@ -1,6 +1,9 @@
 //! Module for handling non-command messages.
 
-use super::{dox_impl::DoxReport, messages::BotError};
+use super::{
+    doxee_resolution::{DoxeeSource, resolve},
+    messages::BotError,
+};
 use frakti::{
     client_cyper::Bot,
     types::{ChatType, Message},
@@ -12,31 +15,23 @@ pub async fn handle_non_command(bot: &Bot, msg: Message) -> Option<String> {
     // We only handle those in private chats, to prevent polluting the groups
     if matches!(msg.chat.type_field, ChatType::Private) {
         info!("Handling non-command message in PM: {msg:?}");
-        let reply = if let Some(origin) = msg.forward_origin {
-            // The message is forwarded
-            if msg.from.is_none() && msg.sender_chat.is_none() {
-                // Can't determine doxer
-                return Some(BotError::DoxerIdentificationFailed.to_string());
-            }
-            debug!("Handling forwarded origin: {origin:?}");
-            DoxReport::from_origin(bot, *origin, None)
-                .await
-                .map_or_else(
-                    || {
-                        debug!("Cannot determine the origin as a user");
-                        BotError::InvalidOrigin.to_string()
-                    },
-                    |report| report.to_string(),
-                )
-        } else {
-            // Not forwarded message - incomprehensible
+        if msg.forward_origin.is_none() {
             debug!(
                 "Not a command or forwarded message: {:?}",
                 msg.text.as_ref()
             );
-            BotError::Incomprehensible.to_string()
-        };
-        Some(reply)
+        }
+        let source = DoxeeSource::PrivateForward { message: msg };
+        let result = Box::pin(resolve(bot, source)).await?;
+        // .expect("private forward resolution should always reply");
+        Some(match result {
+            Ok(report) => report.to_string(),
+            Err(BotError::InvalidOrigin) => {
+                debug!("Cannot determine the origin as a user");
+                BotError::InvalidOrigin.to_string()
+            }
+            Err(error) => error.to_string(),
+        })
     } else {
         None
     }

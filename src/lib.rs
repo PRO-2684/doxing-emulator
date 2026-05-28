@@ -9,6 +9,7 @@
 
 mod commands;
 mod dox_impl;
+mod doxee_resolution;
 mod guest;
 mod inline;
 mod messages;
@@ -95,7 +96,9 @@ pub async fn run(config: Config) -> Result<()> {
                         UpdateContent::GuestMessage(msg) => {
                             // Handling guest messages
                             let bot = bot.clone();
-                            compio::runtime::spawn(Box::pin(handle_guest(bot, *msg))).detach();
+                            let username = username.clone();
+                            compio::runtime::spawn(Box::pin(handle_guest(bot, *msg, username)))
+                                .detach();
                         }
                         UpdateContent::InlineQuery(inline) => {
                             // Handling inline queries
@@ -121,7 +124,7 @@ async fn handle_message(bot: Bot, msg: Message, username: String) {
         // Commands
         Some(command) => Some(Box::pin(command.execute(&bot, msg, &username)).await),
         // Non-commands, can be forwarded messages or others
-        None => handle_non_command(&bot, msg).await,
+        None => Box::pin(handle_non_command(&bot, msg)).await,
     };
     if let Some(reply) = reply {
         info!("Reply: {reply}");
@@ -139,12 +142,14 @@ async fn handle_message(bot: Bot, msg: Message, username: String) {
     }
 }
 
-async fn handle_guest(bot: Bot, msg: Message) {
+async fn handle_guest(bot: Bot, msg: Message, username: String) {
     let Some(guest_id) = msg.guest_query_id.clone() else {
         error!("Guest message without guest_query_id: {msg:?}");
         return;
     };
-    let article = Box::pin(guest::handle_guest_message(&bot, msg)).await;
+    let Some(article) = Box::pin(guest::handle_guest_message(&bot, msg, &username)).await else {
+        return;
+    };
     info!("Answer: {:?}", article.input_message_content);
     let result = InlineQueryResult::Article(article);
     let answer_param = AnswerGuestQueryParams::builder()
@@ -159,7 +164,7 @@ async fn handle_guest(bot: Bot, msg: Message) {
 
 async fn handle_inline(bot: Bot, inline: InlineQuery) {
     let inline_id = inline.id.clone();
-    let article = inline::handle_inline_query(&bot, inline).await;
+    let article = Box::pin(inline::handle_inline_query(&bot, inline)).await;
     info!("Answer: {:?}", article.input_message_content);
     let result = InlineQueryResult::Article(article);
     let answer_param = AnswerInlineQueryParams::builder()

@@ -3,7 +3,6 @@
 mod dox;
 mod help;
 
-use super::dox_impl;
 pub use dox::Dox;
 use frakti::{client_cyper::Bot, types::Message};
 pub use help::Help;
