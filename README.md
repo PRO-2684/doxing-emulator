@@ -12,12 +12,15 @@ Telegram doxing **emulator**. You can find me at [@DoxingEmulatorBot](https://t.
 
 ## 📖 Usage
 
-- `/dox <user_id>` - doxes the user with provided user id
-- Reply a message with `/dox` - doxes the sender of the replied message
+- `/dox`
+    - `/dox <user_id>`: doxes the user with provided user id
+    - Reply a message with `/dox` - doxes the sender of the replied message
+    - Otherwise, doxes the sender of the command
 - Forward a message to the bot - doxes the sender of the forwarded message
 - Inline query - doxes the user with provided user id
 - [Guest interaction](https://telegram.org/blog/ai-bot-revolution-11-new-features#guest-bots)
     - Mention the bot in the message (do not select any inline results)
+    - If user id provided, doxes the user with provided user id
     - If replied to a message, doxes the sender of the replied message
     - Otherwise, doxes the sender of the mentioning message
 
