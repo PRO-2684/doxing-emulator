@@ -10,7 +10,10 @@ pub struct Help;
 impl Command for Help {
     const TRIGGER: &'static str = "help";
     const HELP: &'static str = "查看帮助信息";
-    async fn execute(self, _bot: &Bot, _msg: Message, username: &str) -> String {
-        format!(include_str!("../messages/help.html"), username = username)
+    fn execute(self, _bot: &Bot, _msg: Message, username: &str) -> impl Future<Output = String> {
+        std::future::ready(format!(
+            include_str!("../messages/help.html"),
+            username = username
+        ))
     }
 }
