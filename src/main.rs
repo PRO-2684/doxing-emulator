@@ -6,6 +6,7 @@ use anyhow::Result;
 use compio::fs::read;
 use doxing_emulator::{Config, run};
 use env_logger::Env;
+use futures_util::FutureExt;
 use log::info;
 use std::io::Write;
 use toml::from_slice;
@@ -27,13 +28,13 @@ async fn main() -> Result<()> {
     run(config).await
 }
 
-async fn read_config() -> Result<Config> {
+fn read_config() -> impl Future<Output = Result<Config>> {
     let path = std::env::args()
         .nth(1)
         .unwrap_or_else(|| "config.toml".to_string());
-    let config = read(path).await?;
-    info!("Config read complete, parsing...");
-    let config = from_slice(&config)?;
-
-    Ok(config)
+    read(path).map(|config| {
+        let config = config?;
+        info!("Config read complete, parsing...");
+        Ok(from_slice(&config)?)
+    })
 }

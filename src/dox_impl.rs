@@ -1,14 +1,16 @@
 //! Actual implementation of doxing.
 
 use frakti::{
-    AsyncTelegramApi,
+    AsyncTelegramApi, Error,
     client_cyper::Bot,
     methods::{GetChatMemberParams, GetChatParams},
+    response::MethodResponse,
     types::{
         Birthdate, BusinessLocation, Chat, ChatFullInfo, ChatMember, ExternalReplyInfo,
         MessageOrigin, User,
     },
 };
+use futures_util::FutureExt;
 use log::warn;
 use std::fmt;
 
@@ -307,16 +309,18 @@ impl fmt::Display for DoxReport {
 
 // TODO: Cache
 /// Try to get full info about the user.
-async fn get_full_info(bot: &Bot, chat_id: i64) -> Option<ChatFullInfo> {
+fn get_full_info(bot: &Bot, chat_id: i64) -> impl Future<Output = Option<ChatFullInfo>> {
     let get_params = GetChatParams::builder().chat_id(chat_id).build();
-    let Ok(result) = bot
-        .get_chat(&get_params)
-        .await
-        .inspect_err(|e| warn!("Error querying {chat_id}: {e:?}"))
-    else {
-        return None;
-    };
-    Some(result.result)
+    // bot.get_chat requires a reference, so we use low-level request method to avoid borrowing issues.
+    bot.request("getChat", Some(get_params)).map(
+        move |result: Result<MethodResponse<ChatFullInfo>, Error>| {
+            let Ok(result) = result.inspect_err(|e| warn!("Error querying {chat_id}: {e:?}"))
+            else {
+                return None;
+            };
+            Some(result.result)
+        },
+    )
 }
 
 // TODO: Cache

@@ -5,27 +5,28 @@ use super::{
     inline::create_article,
 };
 use frakti::{client_cyper::Bot, inline_mode::InlineQueryResultArticle, types::Message};
+use futures_util::{FutureExt, future::Either};
 use log::info;
 
 /// Handle guest messages.
-pub async fn handle_guest_message(
+pub fn handle_guest_message(
     bot: &Bot,
     msg: Message,
     bot_username: &str,
-) -> Option<InlineQueryResultArticle> {
+) -> impl Future<Output = Option<InlineQueryResultArticle>> {
     info!("Handling guest message: {:?}", msg.text);
 
-    let arg = parse_guest_invocation(msg.text.as_deref(), bot_username)?;
-    let source = DoxeeSource::Guest { arg, message: msg };
-    let result = Box::pin(source.resolve_with(bot))
-        .await
-        .expect("guest mention resolution should always reply");
-    let message = match result {
-        Ok(report) => report.to_string(),
-        Err(error) => error.to_string(),
+    let Some(arg) = parse_guest_invocation(msg.text.as_deref(), bot_username) else {
+        return Either::Left(std::future::ready(None));
     };
-
-    Some(create_article(message, "Title", "Description"))
+    let source = DoxeeSource::Guest { arg, message: msg };
+    Either::Right(source.resolve_with(bot).map(|result| {
+        let message = match result.expect("guest mention resolution should always reply") {
+            Ok(report) => report.to_string(),
+            Err(error) => error.to_string(),
+        };
+        Some(create_article(message, "Title", "Description"))
+    }))
 }
 
 fn parse_guest_invocation(text: Option<&str>, bot_username: &str) -> Option<DoxArg> {

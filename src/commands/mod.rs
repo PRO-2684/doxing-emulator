@@ -5,6 +5,7 @@ mod help;
 
 pub use dox::Dox;
 use frakti::{client_cyper::Bot, types::Message};
+use futures_util::future::Either;
 pub use help::Help;
 use log::info;
 
@@ -73,11 +74,11 @@ impl Commands {
     }
 
     /// Execute the command.
-    pub async fn execute(self, bot: &Bot, msg: Message, username: &str) -> String {
+    pub fn execute(self, bot: &Bot, msg: Message, username: &str) -> impl Future<Output = String> {
         info!("Executing command: {self:?}");
         match self {
-            Self::Help(help) => help.execute(bot, msg, username).await,
-            Self::Dox(dox) => Box::pin(dox.execute(bot, msg, username)).await,
+            Self::Help(help) => Either::Left(help.execute(bot, msg, username)),
+            Self::Dox(dox) => Either::Right(dox.execute(bot, msg, username)),
         }
     }
 }

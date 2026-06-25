@@ -5,6 +5,7 @@ use frakti::{
     client_cyper::Bot,
     types::{ExternalReplyInfo, Message, User},
 };
+use futures_util::{FutureExt, future::Either};
 
 /// Parsed argument naming an explicit doxee.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -61,17 +62,24 @@ pub enum DoxeeSource {
 
 impl DoxeeSource {
     /// Resolve this source context into a dox report or bot error.
-    pub async fn resolve_with(self, bot: &Bot) -> Option<Result<DoxReport, BotError>> {
-        Some(match self {
+    pub fn resolve_with(
+        self,
+        bot: &Bot,
+    ) -> impl Future<Output = Option<Result<DoxReport, BotError>>> {
+        match self {
             Self::Command { arg, message } => {
-                Box::pin(resolve_message_source(bot, arg, message)).await
+                Either::Left(resolve_message_source(bot, arg, message).map(Some))
             }
-            Self::Guest { arg, message } => {
-                Box::pin(resolve_guest_message_source(bot, arg, message)).await
-            }
-            Self::Inline { arg, from } => resolve_inline_source(bot, arg, from).await,
-            Self::PrivateMessage { message } => resolve_private_message(bot, message).await,
-        })
+            Self::Guest { arg, message } => Either::Right(Either::Left(
+                resolve_guest_message_source(bot, arg, message).map(Some),
+            )),
+            Self::Inline { arg, from } => Either::Right(Either::Right(Either::Left(
+                resolve_inline_source(bot, arg, from).map(Some),
+            ))),
+            Self::PrivateMessage { message } => Either::Right(Either::Right(Either::Right(
+                resolve_private_message(bot, message).map(Some),
+            ))),
+        }
     }
 }
 
@@ -155,7 +163,10 @@ async fn resolve_inline_source(bot: &Bot, arg: DoxArg, from: User) -> Result<Dox
     }
 }
 
-async fn resolve_private_message(bot: &Bot, msg: Message) -> Result<DoxReport, BotError> {
+fn resolve_private_message(
+    bot: &Bot,
+    msg: Message,
+) -> impl Future<Output = Result<DoxReport, BotError>> {
     let Message {
         from,
         sender_chat,
@@ -164,14 +175,15 @@ async fn resolve_private_message(bot: &Bot, msg: Message) -> Result<DoxReport, B
     } = msg;
 
     let Some(origin) = forward_origin else {
-        return Err(BotError::Incomprehensible);
+        return Either::Left(std::future::ready(Err(BotError::Incomprehensible)));
     };
     if from.is_none() && sender_chat.is_none() {
-        return Err(BotError::DoxerIdentificationFailed);
+        return Either::Left(std::future::ready(Err(BotError::DoxerIdentificationFailed)));
     }
-    DoxReport::from_origin(bot, *origin, None)
-        .await
-        .ok_or(BotError::InvalidOrigin)
+    Either::Right(
+        DoxReport::from_origin(bot, *origin, None)
+            .map(|report| report.ok_or(BotError::InvalidOrigin)),
+    )
 }
 
 async fn resolve_implicit_doxee(

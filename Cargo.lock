@@ -637,6 +637,7 @@ dependencies = [
  "compio",
  "env_logger",
  "frakti",
+ "futures-util",
  "log",
  "serde",
  "toml",

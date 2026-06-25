@@ -6,8 +6,10 @@ use frakti::{
     AsyncTelegramApi, Error,
     client_cyper::Bot,
     methods::{DeleteMyCommandsParams, SetMyCommandsParams, SetMyDefaultAdministratorRightsParams},
+    response::MethodResponse,
     types::{BotCommand, ChatAdministratorRights},
 };
+use futures_util::FutureExt;
 
 /// Set up commands.
 pub async fn setup_commands(bot: &Bot) -> Result<(), Error> {
@@ -33,14 +35,13 @@ pub async fn setup_commands(bot: &Bot) -> Result<(), Error> {
 }
 
 /// Set up rights.
-pub async fn setup_rights(bot: &Bot) -> Result<(), Error> {
+pub fn setup_rights(bot: &Bot) -> impl Future<Output = Result<(), Error>> {
     let rights_param = SetMyDefaultAdministratorRightsParams::builder()
         .rights(RECOMMENDED_ADMIN_RIGHTS)
         .build();
-    bot.set_my_default_administrator_rights(&rights_param)
-        .await?;
-
-    Ok(())
+    // bot.set_my_default_administrator_rights requires a reference, so we use low-level request method to avoid borrowing issues.
+    bot.request("setMyDefaultAdministratorRights", Some(rights_param))
+        .map(|result: Result<MethodResponse<bool>, Error>| result.map(|_| ()))
 }
 
 /// Recommended admin rights for the bot. (No privilege required)

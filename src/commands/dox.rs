@@ -3,6 +3,7 @@
 use super::Command;
 use crate::doxee_resolution::{DoxArg, DoxeeSource};
 use frakti::{client_cyper::Bot, types::Message};
+use futures_util::FutureExt;
 
 /// The dox command.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -14,15 +15,14 @@ impl Command for Dox {
     const TRIGGER: &'static str = "dox";
     const HELP: &'static str = "盒盒盒";
     #[allow(clippy::similar_names)]
-    async fn execute(self, bot: &Bot, msg: Message, _username: &str) -> String {
+    fn execute(self, bot: &Bot, msg: Message, _username: &str) -> impl Future<Output = String> {
         let arg = DoxArg::parse(self.doxee.as_deref());
         let source = DoxeeSource::Command { arg, message: msg };
-        let result = Box::pin(source.resolve_with(bot))
-            .await
-            .expect("command resolution should always reply");
-        match result {
-            Ok(report) => report.to_string(),
-            Err(error) => error.to_string(),
-        }
+        source.resolve_with(bot).map(|result| {
+            match result.expect("command resolution should always reply") {
+                Ok(report) => report.to_string(),
+                Err(error) => error.to_string(),
+            }
+        })
     }
 }
