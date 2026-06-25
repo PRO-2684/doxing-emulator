@@ -13,12 +13,12 @@ authors = ["PRO-2684"]
 
 [dependencies]
 anyhow = "1.0.102"
-compio = { version = "0.19.0", features = ["macros", "fs"] }
+compio = { version = "0.19.1", features = ["macros", "fs"] }
 env_logger = "0.11.10" # Logging
-frakti = { version = "0.1.5", features = [
+frakti = { version = "0.50.1", features = [
     "client-cyper",
 ] } # Telegram API client
-log = "0.4.30" # Logging
+log = "0.4.33" # Logging
 serde = { version = "1.0.228", features = ["derive"] } # Configuration
 toml = { version = "1.1.2", optional = true } # Configuration
 
